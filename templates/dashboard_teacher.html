@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Наставник{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Добредојде, {{ user_name }}!</h2>
+        <p class="lead">Наставничка контролна табла</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5>Хемиски елементи</h5>
+            </div>
+            <div class="card-body">
+                <p>Управување со хемиски елементи</p>
+                <a href="/elements" class="btn btn-outline-primary btn-sm">Прегледај</a>
+                <a href="/elements/add" class="btn btn-primary btn-sm">Додај нов</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h5>Лабораториска опрема</h5>
+            </div>
+            <div class="card-body">
+                <p>Управување со лабораториска опрема</p>
+                <a href="/equipment" class="btn btn-outline-success btn-sm">Прегледај</a>
+                <a href="/equipment/add" class="btn btn-success btn-sm">Додај нова</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-warning text-dark">
+                <h5>Реакции</h5>
+            </div>
+            <div class="card-body">
+                <p>Креирање на хемиски реакции</p>
+                <a href="/reactions" class="btn btn-outline-warning btn-sm">Прегледај</a>
+                <a href="/reactions/add" class="btn btn-warning btn-sm">Додај нова</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card mb-3">
+            <div class="card-header bg-danger text-white">
+                <h5>Експерименти</h5>
+            </div>
+            <div class="card-body">
+                <p>Преглед на сите експерименти</p>
+                <a href="/experiments" class="btn btn-outline-danger btn-sm">Сите експерименти</a>
+                <a href="/my-experiments" class="btn btn-danger btn-sm">Мои експерименти</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-purple text-white"
+                style="background: linear-gradient(45deg, #6f42c1, #007bff) !important;">
+                <h5>Виртуелна лабораторија</h5>
+            </div>
+            <div class="card-body">
+                <p>Интерактивни симулации на реакции</p>
+                <a href="/laboratory" class="btn btn-primary">Отвори лабораторија</a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5>Студенти</h5>
+            </div>
+            <div class="card-body">
+                <p>Следете го напредокот на вашите студенти</p>
+                <a href="/my_students" class="btn btn-info">Види студенти</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5>Извештаи</h5>
+            </div>
+            <div class="card-body">
+                <p>Детални статистики и извештаи</p>
+                <a href="/reports" class="btn btn-secondary">Види извештаи</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

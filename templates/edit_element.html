@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Едитирај елемент{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>Едитирај хемиски елемент</h3>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="symbol" class="form-label">Симбол</label>
+                                <input type="text" class="form-control" name="symbol" maxlength="2" value="{{ element.symbol }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Име на елемент</label>
+                                <input type="text" class="form-control" name="name" value="{{ element.element_name }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="atomic_number" class="form-label">Атомски број</label>
+                                <input type="number" class="form-control" name="atomic_number" value="{{ element.atomic_number }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="atomic_weight" class="form-label">Атомска маса</label>
+                                <input type="number" step="0.001" class="form-control" name="atomic_weight" value="{{ element.atomic_weight }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="melting_point" class="form-label">Точка на топење (°C)</label>
+                                <input type="number" step="0.1" class="form-control" name="melting_point" value="{{ element.melting_point or '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="boiling_point" class="form-label">Точка на вриење (°C)</label>
+                                <input type="number" step="0.1" class="form-control" name="boiling_point" value="{{ element.boiling_point or '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="hazard_type" class="form-label">Тип на опасност</label>
+                        <input type="text" class="form-control" name="hazard_type" maxlength="50" value="{{ element.hazard_type or '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Опис</label>
+                        <textarea class="form-control" name="description" rows="3">{{ element.description_element or '' }}</textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">Ажурирај елемент</button>
+                    <a href="/elements" class="btn btn-secondary">Откажи</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

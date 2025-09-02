@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Извештаи{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Извештаи и статистики</h2>
+        <p class="text-muted">Изберете извештај за преглед</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="list-group">
+            <h5>Активност на студенти</h5>
+            <a href="/my_students" class="list-group-item list-group-item-action">
+                <strong>Мои студенти</strong><br>
+                <small>Преглед на активностите на вашите студенти</small>
+            </a>
+            <a href="/reports/inactive_students" class="list-group-item list-group-item-action">
+                <strong>Неактивни студенти</strong><br>
+                <small>Студенти кои не учествувале во експерименти</small>
+            </a>
+            <a href="/reports/low_activity_students" class="list-group-item list-group-item-action">
+                <strong>Слабо активни студенти</strong><br>
+                <small>Студенти со помалку од 3 експерименти</small>
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="list-group">
+            <h5>Детални извештаи</h5>
+            <a href="/reports/detailed_experiments" class="list-group-item list-group-item-action">
+                <strong>Детални експерименти</strong><br>
+                <small>Сите експерименти по студент</small>
+            </a>
+            <a href="/reports/element_views" class="list-group-item list-group-item-action">
+                <strong>Прегледи на елементи</strong><br>
+                <small>Кој студент кои елементи ги прегледал</small>
+            </a>
+            <a href="/reports/teacher_statistics" class="list-group-item list-group-item-action">
+                <strong>Статистики по професор</strong><br>
+                <small>Споредба помеѓу професори</small>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="/dashboard" class="btn btn-primary">Назад до Dashboard</a>
+</div>
+{% endblock %}

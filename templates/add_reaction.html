@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Додај реакција{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>Додај нова хемиска реакција</h3>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="element1_id" class="form-label">Првин елемент</label>
+                                <select class="form-select" name="element1_id" required>
+                                    <option value="">Избери првин елемент</option>
+                                    {% for element in elements %}
+                                    <option value="{{ element.element_id }}">{{ element.symbol }} - {{ element.element_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="element2_id" class="form-label">Втор елемент</label>
+                                <select class="form-select" name="element2_id" required>
+                                    <option value="">Избери втор елемент</option>
+                                    {% for element in elements %}
+                                    <option value="{{ element.element_id }}">{{ element.symbol }} - {{ element.element_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="product" class="form-label">Продукт на реакцијата</label>
+                        <input type="text" class="form-control" name="product" maxlength="50" 
+                               placeholder="H2O, NaCl, CO2..." required>
+                        <small class="form-text text-muted">Пример: H2O (Вода), NaCl (Сол)</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="conditions" class="form-label">Услови за реакцијата</label>
+                        <textarea class="form-control" name="conditions" rows="3" 
+                                  placeholder="Опишете ги условите потребни за реакцијата (температура, притисок, катализатор...)"></textarea>
+                        <small class="form-text text-muted">Пример: Нормална температура, присуство на катализатор</small>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <strong>Напомена:</strong> Оваа реакција ќе биде достапна за сите студенти во виртуелната лабораторија.
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">Додај реакција</button>
+                    <a href="/reactions" class="btn btn-secondary">Откажи</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

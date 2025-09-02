@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Регистрација{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>Регистрирај се во SIMLAB</h3>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Име</label>
+                                <input type="text" class="form-control" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="surname" class="form-label">Презиме</label>
+                                <input type="text" class="form-control" name="surname" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email адреса</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Лозинка</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Улога</label>
+                        <select class="form-select" name="role" required>
+                            <option value="">Избери улога</option>
+                            <option value="student">Студент</option>
+                            <option value="teacher">Наставник</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Избор на наставник за студенти -->
+                    <div class="mb-3" id="teacher-select" style="display: none;">
+                        <label for="teacher_id" class="form-label">Избери наставник</label>
+                        <select class="form-select" name="teacher_id">
+                            <option value="">Избери наставник</option>
+                            {% for teacher in teachers %}
+                            <option value="{{ teacher.teacher_id }}">{{ teacher.user_name }} {{ teacher.user_surname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">Регистрирај се</button>
+                    <a href="/login" class="btn btn-link">Веќе имаш профил? Најави се</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelector('select[name="role"]').addEventListener('change', function() {
+    const teacherSelect = document.getElementById('teacher-select');
+    if (this.value === 'student') {
+        teacherSelect.style.display = 'block';
+        teacherSelect.querySelector('select').required = true;
+    } else {
+        teacherSelect.style.display = 'none';
+        teacherSelect.querySelector('select').required = false;
+    }
+});
+</script>
+{% endblock %}

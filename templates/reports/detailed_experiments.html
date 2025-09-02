@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Детални експерименти{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Студенти и експерименти кои ги извршиле</h2>
+        <p class="text-muted">Детален преглед на сите активности</p>
+    </div>
+</div>
+
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-info">
+            <tr>
+                <th>Студент</th>
+                <th>Експеримент ID</th>
+                <th>Резултат</th>
+                <th>Датум/Време</th>
+                <th>Статус</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for experiment in experiments %}
+            <tr>
+                <td>{{ experiment.full_name }}</td>
+                <td>
+                    <span class="badge bg-primary">#{{ experiment.experiment_id }}</span>
+                </td>
+                <td>{{ experiment.result[:50] }}{% if experiment.result|length > 50 %}...{% endif %}</td>
+                <td>{{ experiment.participation_time.strftime('%d.%m.%Y %H:%M') if experiment.participation_time }}</td>
+                <td><span class="badge bg-success">Завршен</span></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center text-muted">
+                    Нема забележани експерименти од вашите студенти
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if experiments %}
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ experiments|length }}</h5>
+                <p class="card-text">Вкупно експерименти</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ experiments|map(attribute='full_name')|unique|list|length }}</h5>
+                <p class="card-text">Активни студенти</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                {% set avg = (experiments|length / experiments|map(attribute='full_name')|unique|list|length)|round(1) if experiments %}
+                <h5 class="card-title">{{ avg if avg else 0 }}</h5>
+                <p class="card-text">Просечно по студент</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="mt-3">
+    <a href="/reports" class="btn btn-secondary">Назад до извештаи</a>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Најава{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>Најави се во SIMLAB</h3>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email адреса</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Лозинка</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Најави се</button>
+                    <a href="/register" class="btn btn-link">Немаш профил? Регистрирај се</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

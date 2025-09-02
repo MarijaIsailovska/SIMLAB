@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Активности на корисници{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Сумарен извештај - Активности на корисници</h2>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Корисник</th>
+                        <th>Улога</th>
+                        <th>Прегледани елементи</th>
+                        <th>Прегледана опрема</th>
+                        <th>Експерименти</th>
+                        <th>Вкупна активност</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in activities %}
+                    <tr>
+                        <td>{{ activity.full_name }}</td>
+                        <td>
+                            <span class="badge bg-{% if activity.role == 'teacher' %}primary{% else %}success{% endif %}">
+                                {{ activity.role }}
+                            </span>
+                        </td>
+                        <td><span class="badge bg-info">{{ activity.elements_viewed }}</span></td>
+                        <td><span class="badge bg-warning">{{ activity.equipment_viewed }}</span></td>
+                        <td><span class="badge bg-danger">{{ activity.experiments_participated }}</span></td>
+                        <td>
+                            <strong>{{ activity.elements_viewed + activity.equipment_viewed + activity.experiments_participated }}</strong>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="/reports" class="btn btn-secondary">Назад до извештаи</a>
+</div>
+{% endblock %}

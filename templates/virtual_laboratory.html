@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Виртуелна лабораторија{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 text-center mb-4">
+        <h2>Виртуелна хемиска лабораторија</h2>
+        <p class="lead">Изберете елементи за да видите дали постои реакција</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body">
+                <div class="reaction-workspace" style="display: grid; grid-template-columns: 1fr 200px 1fr; gap: 30px; align-items: center; margin-bottom: 40px;">
+                    <!-- Првин елемент -->
+                    <div class="element-selector text-center">
+                        <div class="element-display" id="element1-display" style="width: 120px; height: 120px; border: 3px dashed #ccc; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto; background: white;">
+                            <span>Избери<br>Елемент 1</span>
+                        </div>
+                        <select class="form-select mt-3" id="element1-select">
+                            <option value="">-- Избери елемент --</option>
+                            {% for element in elements %}
+                            <option value="{{ element.symbol }}" data-name="{{ element.element_name }}" data-id="{{ element.element_id }}">
+                                {{ element.symbol }} - {{ element.element_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Стрелка и копче -->
+                    <div class="reaction-arrow text-center">
+                        <div style="font-size: 30px; color: #666; margin-bottom: 10px;">+</div>
+                        <button class="btn btn-primary" id="react-btn" disabled onclick="performReaction()">Реагирај</button>
+                        <div style="font-size: 30px; color: #666; margin-top: 10px;">→</div>
+                    </div>
+                    
+                    <!-- Втор елемент -->
+                    <div class="element-selector text-center">
+                        <div class="element-display" id="element2-display" style="width: 120px; height: 120px; border: 3px dashed #ccc; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto; background: white;">
+                            <span>Избери<br>Елемент 2</span>
+                        </div>
+                        <select class="form-select mt-3" id="element2-select">
+                            <option value="">-- Избери елемент --</option>
+                            {% for element in elements %}
+                            <option value="{{ element.symbol }}" data-name="{{ element.element_name }}" data-id="{{ element.element_id }}">
+                                {{ element.symbol }} - {{ element.element_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Резултат -->
+                <div class="result-area" id="result-area" style="display: none;">
+                    <div class="alert" id="result-content"></div>
+                    {% if user_role == 'teacher' %}
+                    <div class="text-center">
+                        <button class="btn btn-warning" onclick="createExperiment()" id="create-experiment-btn" style="display: none;">
+                            Создај експеримент од оваа реакција
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4 text-center">
+    <a href="/dashboard" class="btn btn-secondary">Назад до Dashboard</a>
+    <a href="/reactions" class="btn btn-info">Види сите реакции</a>
+</div>
+
+<script>
+let selectedElements = {};
+let currentReaction = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const element1Select = document.getElementById('element1-select');
+    const element2Select = document.getElementById('element2-select');
+    
+    element1Select.addEventListener('change', function() {
+        updateElementDisplay(this, 'element1-display', 'element1');
+        checkReactionReady();
+    });
+    
+    element2Select.addEventListener('change', function() {
+        updateElementDisplay(this, 'element2-display', 'element2');
+        checkReactionReady();
+    });
+});
+
+function updateElementDisplay(select, displayId, elementKey) {
+    const display = document.getElementById(displayId);
+    const value = select.value;
+    const name = select.options[select.selectedIndex]?.dataset?.name || '';
+    const id = select.options[select.selectedIndex]?.dataset?.id || '';
+    
+    if (value) {
+        display.innerHTML = `
+            <div style="font-size: 36px; font-weight: bold;">${value}</div>
+            <div style="font-size: 12px; margin-top: 5px;">${name}</div>
+        `;
+        display.style.borderColor = '#4ECDC4';
+        display.style.background = 'linear-gradient(45deg, #4ECDC4, #44A08D)';
+        display.style.color = 'white';
+        
+        selectedElements[elementKey] = { symbol: value, name: name, id: id };
+    } else {
+        display.innerHTML = displayId === 'element1-display' ? 
+            '<span>Избери<br>Елемент 1</span>' : 
+            '<span>Избери<br>Елемент 2</span>';
+        display.style.borderColor = '#ccc';
+        display.style.background = 'white';
+        display.style.color = 'black';
+        
+        delete selectedElements[elementKey];
+    }
+}
+
+function checkReactionReady() {
+    const reactBtn = document.getElementById('react-btn');
+    reactBtn.disabled = !(selectedElements.element1 && selectedElements.element2);
+}
+
+function performReaction() {
+    if (!selectedElements.element1 || !selectedElements.element2) return;
+    
+    fetch('/api/check-reaction', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            element1: selectedElements.element1.symbol,
+            element2: selectedElements.element2.symbol
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showResult(data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showResult({success: false, message: 'Грешка при проверката'});
+    });
+}
+
+function showResult(data) {
+    const resultArea = document.getElementById('result-area');
+    const resultContent = document.getElementById('result-content');
+    const createBtn = document.getElementById('create-experiment-btn');
+    
+    resultArea.style.display = 'block';
+    
+    if (data.success) {
+        currentReaction = data;
+        resultContent.className = 'alert alert-success';
+        resultContent.innerHTML = `
+            <h4>Успешна реакција!</h4>
+            <div style="font-size: 20px; font-weight: bold; margin: 15px 0; text-align: center;">
+                ${selectedElements.element1.symbol} + ${selectedElements.element2.symbol} → ${data.product}
+            </div>
+            <p><strong>Продукт:</strong> ${data.product}</p>
+            <p><strong>Услови:</strong> ${data.conditions || 'Стандардни услови'}</p>
+        `;
+        
+        if (createBtn) {
+            createBtn.style.display = 'inline-block';
+        }
+    } else {
+        currentReaction = null;
+        resultContent.className = 'alert alert-warning';
+        resultContent.innerHTML = `
+            <h4>Реакцијата не е дефинирана</h4>
+            <p>${data.message}</p>
+            {% if user_role == 'teacher' %}
+            <p><a href="/reactions/add" class="btn btn-sm btn-primary">Додај ја оваа реакција</a></p>
+            {% endif %}
+        `;
+        
+        if (createBtn) {
+            createBtn.style.display = 'none';
+        }
+    }
+}
+
+function createExperiment() {
+    if (!currentReaction) return;
+    
+    // Тука би се отворил modal или форма за креирање експеримент
+    alert('Функцијата за креирање експеримент ќе биде имплементирана во следната фаза.');
+}
+</script>
+{% endblock %}

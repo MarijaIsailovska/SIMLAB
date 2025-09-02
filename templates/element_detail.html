@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ element.element_name }} ({{ element.symbol }}){% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <h3>{{ element.symbol }} - {{ element.element_name }}</h3>
+                {% if user_role == 'teacher' %}
+                    <a href="/elements/{{ element.element_id }}/edit" class="btn btn-warning btn-sm">Едитирај</a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Основни информации</h5>
+                        <p><strong>Атомски број:</strong> {{ element.atomic_number }}</p>
+                        <p><strong>Атомска маса:</strong> {{ element.atomic_weight }}</p>
+                        {% if element.melting_point %}
+                            <p><strong>Точка на топење:</strong> {{ element.melting_point }}°C</p>
+                        {% endif %}
+                        {% if element.boiling_point %}
+                            <p><strong>Точка на вриење:</strong> {{ element.boiling_point }}°C</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Безбедносни информации</h5>
+                        {% if element.hazard_type %}
+                            <div class="alert alert-warning">
+                                <strong>Опасност:</strong> {{ element.hazard_type }}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Нема специфични предупредувања</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if element.description_element %}
+                    <hr>
+                    <h5>Опис</h5>
+                    <p>{{ element.description_element }}</p>
+                {% endif %}
+                
+                <hr>
+                <p class="text-muted"><small>Создадено од: {{ element.created_by }}</small></p>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <a href="/elements" class="btn btn-secondary">Назад до листа</a>
+            <a href="/dashboard" class="btn btn-primary">Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

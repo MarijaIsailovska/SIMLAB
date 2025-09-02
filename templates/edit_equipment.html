@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Едитирај опрема{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>Едитирај лабораториска опрема</h3>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Име на опремата</label>
+                        <input type="text" class="form-control" name="name" maxlength="50" value="{{ equipment.equipment_name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Тип на опрема</label>
+                        <input type="text" class="form-control" name="type" maxlength="50" value="{{ equipment.type or '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Опис</label>
+                        <textarea class="form-control" name="description" rows="3">{{ equipment.description or '' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="safety_info" class="form-label">Безбедносни информации</label>
+                        <textarea class="form-control" name="safety_info" rows="2">{{ equipment.safety_info or '' }}</textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">Ажурирај опрема</button>
+                    <a href="/equipment" class="btn btn-secondary">Откажи</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

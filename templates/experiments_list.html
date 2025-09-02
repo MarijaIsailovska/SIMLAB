@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Експерименти{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Сите експерименти</h2>
+        <p class="text-muted">Листа на изведени експерименти во системот</p>
+    </div>
+</div>
+
+<div class="row mt-3">
+    {% for experiment in experiments %}
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <h5>Експеримент #{{ experiment.experiment_id }}</h5>
+                <small class="text-muted">{{ experiment.time_stamp.strftime('%d.%m.%Y %H:%M') if experiment.time_stamp }}</small>
+            </div>
+            <div class="card-body">
+                <h6 class="card-title text-primary">
+                    {{ experiment.element1_symbol }} + {{ experiment.element2_symbol }} → {{ experiment.product }}
+                </h6>
+                
+                <p><strong>Реакција:</strong> {{ experiment.element1_name }} + {{ experiment.element2_name }}</p>
+                
+                <p><strong>Услови:</strong> {{ experiment.conditions or 'Стандардни услови' }}</p>
+                
+                <p><strong>Резултат:</strong> {{ experiment.result }}</p>
+                
+                {% if experiment.safety_warning %}
+                <div class="alert alert-warning alert-sm p-2">
+                    <strong>Безбедност:</strong> {{ experiment.safety_warning }}
+                </div>
+                {% endif %}
+                
+                <p class="text-muted"><small>Креиран од: {{ experiment.created_by }}</small></p>
+                
+                <a href="/experiments/{{ experiment.experiment_id }}" class="btn btn-info btn-sm">Детали</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">Нема изведени експерименти во системот.</div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="mt-3">
+    <a href="/dashboard" class="btn btn-primary">Назад до Dashboard</a>
+</div>
+{% endblock %}

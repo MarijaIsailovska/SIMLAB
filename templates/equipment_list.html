@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Лабораториска опрема{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Лабораториска опрема</h2>
+            {% if user_role == 'teacher' %}
+                <a href="/equipment/add" class="btn btn-success">Додај нова опрема</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if error %}
+    <div class="alert alert-warning">{{ error }}</div>
+{% else %}
+    <div class="row">
+        {% for item in equipment %}
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <h5 class="mb-0">{{ item.equipment_name }}</h5>
+                    <small class="text-muted">{{ item.type }}</small>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ item.description }}</p>
+                    
+                    {% if item.safety_info %}
+                        <div class="alert alert-warning alert-sm p-2">
+                            <strong>Безбедност:</strong> {{ item.safety_info }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mt-2">
+                        <a href="/equipment/{{ item.equipment_id }}" class="btn btn-info btn-sm">Детали</a>
+                        {% if user_role == 'teacher' %}
+                            <a href="/equipment/{{ item.equipment_id }}/edit" class="btn btn-warning btn-sm">Едитирај</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="mt-3">
+    <a href="/dashboard" class="btn btn-secondary">Назад до Dashboard</a>
+</div>
+{% endblock %}

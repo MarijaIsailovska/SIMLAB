@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ equipment.equipment_name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <h3>{{ equipment.equipment_name }}</h3>
+                {% if user_role == 'teacher' %}
+                    <a href="/equipment/{{ equipment.equipment_id }}/edit" class="btn btn-warning btn-sm">Едитирај</a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Основни информации</h5>
+                        <p><strong>Тип:</strong> {{ equipment.type or 'Не е специфициран' }}</p>
+                        <p><strong>Опис:</strong></p>
+                        <p>{{ equipment.description or 'Нема достапен опис' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Безбедносни информации</h5>
+                        {% if equipment.safety_info %}
+                            <div class="alert alert-warning">
+                                {{ equipment.safety_info }}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Нема специфични безбедносни барања</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <a href="/equipment" class="btn btn-secondary">Назад до листа</a>
+            <a href="/dashboard" class="btn btn-primary">Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

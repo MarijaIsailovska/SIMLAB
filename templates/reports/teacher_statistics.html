@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Статистики по професор{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Број на студенти по професор и просечен број на експерименти</h2>
+    </div>
+</div>
+
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead class="table-primary">
+            <tr>
+                <th>Teacher ID</th>
+                <th>Професор</th>
+                <th>Вкупно студенти</th>
+                <th>Вкупно експерименти</th>
+                <th>Просек по студент</th>
+                <th>Ранг</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in statistics %}
+            <tr>
+                <td>{{ stat.teacher_id }}</td>
+                <td>{{ stat.full_name }}</td>
+                <td><span class="badge bg-info">{{ stat.total_students }}</span></td>
+                <td><span class="badge bg-success">{{ stat.total_experiments }}</span></td>
+                <td><strong>{{ stat.avg_experiments_per_student or 0 }}</strong></td>
+                <td>
+                    {% set avg = stat.avg_experiments_per_student or 0 %}
+                    {% if avg >= 5 %}
+                    <span class="badge bg-success">Одличен</span>
+                    {% elif avg >= 3 %}
+                    <span class="badge bg-warning">Добар</span>
+                    {% else %}
+                    <span class="badge bg-danger">Потребно подобрување</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center">Нема податоци</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-3">
+    <a href="/reports" class="btn btn-secondary">Назад до извештаи</a>
+</div>
+{% endblock %}

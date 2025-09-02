@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Неактивни студенти{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Студенти кои никогаш не учествувале во експерименти</h2>
+        <p class="text-muted">Студенти кои се неактивни и треба поддршка</p>
+    </div>
+</div>
+
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead class="table-danger">
+            <tr>
+                <th>Student ID</th>
+                <th>Име и презиме</th>
+                <th>Статус</th>
+                <th>Препораки</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.student_id }}</td>
+                <td>{{ student.full_name }}</td>
+                <td><span class="badge bg-danger">Неактивен</span></td>
+                <td>
+                    <small class="text-muted">
+                        Потребна е итна поддршка и мотивација за учество во експерименти
+                    </small>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-center text-success">
+                    Сите ваши студенти се активни! Одлична работа! 🎉
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-3">
+    <a href="/reports" class="btn btn-secondary">Назад до извештаи</a>
+</div>
+{% endblock %}

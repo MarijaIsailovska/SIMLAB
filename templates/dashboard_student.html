@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Студент{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Добредојде, {{ user_name }}!</h2>
+        <p class="lead">Студентска контролна табла</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5>Хемиски елементи</h5>
+            </div>
+            <div class="card-body">
+                <p>Истражете ги достапните хемиски елементи</p>
+                <a href="/elements" class="btn btn-primary">Прегледај елементи</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h5>Лабораториска опрема</h5>
+            </div>
+            <div class="card-body">
+                <p>Погледнете ја достапната опрема</p>
+                <a href="/equipment" class="btn btn-success">Прегледај опрема</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-danger text-white">
+                <h5>Виртуелна лабораторија</h5>
+            </div>
+            <div class="card-body">
+                <p>Извршете хемиски експерименти</p>
+                <a href="/laboratory" class="btn btn-danger">Отвори лабораторија</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h5>Мои експерименти</h5>
+        </div>
+        <div class="card-body">
+            <p>Прегледајте ги вашите експерименти</p>
+            <a href="/my-experiments" class="btn btn-warning">Види експерименти</a>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5>Мои експерименти</h5>
+            </div>
+            <div class="card-body">
+                <p>Прегледајте ги вашите експерименти</p>
+                <a href="/my-experiments" class="btn btn-warning">Види експерименти</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5>Напредок</h5>
+            </div>
+            <div class="card-body">
+                <p>Следете го вашиот напредок</p>
+                <a href="/my-progress" class="btn btn-info">Види напредок</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
