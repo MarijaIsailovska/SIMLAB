@@ -4,105 +4,135 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h2>Мои експерименти</h2>
-        <p class="text-muted">{{ user_name }} ({{ user_role }})</p>
+        <h2>📊 Мои експерименти</h2>
+        <p class="text-muted">
+            <strong>{{ user_name }}</strong> | 
+            <span class="badge bg-{{ 'primary' if user_role == 'teacher' else 'success' }}">
+                {{ 'Професор' if user_role == 'teacher' else 'Студент' }}
+            </span>
+        </p>
     </div>
 </div>
 
+{% if experiments %}
+<!-- Статистики -->
 <div class="row mt-3">
-    {% for experiment in experiments %}
-    <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span class="badge bg-primary">Експеримент #{{ experiment.experiment_id }}</span>
-                <small class="text-muted">{{ experiment.participation_timestamp.strftime('%d.%m.%Y %H:%M') if experiment.participation_timestamp }}</small>
-            </div>
+    <div class="col-md-3">
+        <div class="card text-center">
             <div class="card-body">
-                <div class="reaction-equation text-center mb-3 p-3 bg-light rounded">
-                    <strong style="font-size: 18px;">
-                        {{ experiment.element1_symbol }} + {{ experiment.element2_symbol }} → {{ experiment.product.split('(')[0].strip() }}
-                    </strong>
-                </div>
-                
-                <div class="mb-2">
-                    <strong>Реактанти:</strong> {{ experiment.element1_name }} + {{ experiment.element2_name }}
-                </div>
-                
-                <div class="mb-2">
-                    <strong>Продукт:</strong> {{ experiment.product }}
-                </div>
-                
-                <div class="mb-2">
-                    <strong>Услови:</strong> {{ experiment.conditions or 'Стандардни услови' }}
-                </div>
-                
-                <div class="mb-3">
-                    <strong>Резултат:</strong> {{ experiment.result[:100] }}{% if experiment.result|length > 100 %}...{% endif %}
-                </div>
-                
-                {% if experiment.safety_warning %}
-                <div class="alert alert-warning alert-sm p-2">
-                    <small><strong>Безбедност:</strong> {{ experiment.safety_warning }}</small>
-                </div>
-                {% endif %}
-                
-                <div class="text-center">
-                    <button class="btn btn-info btn-sm" onclick="showExperimentDetails({ experiment,experiment_id })">
-                        Детални информации
-                    </button>
-                </div>
+                <h3 class="text-success">{{ experiments|map(attribute='product')|unique|list|length }}</h3>
+                <p class="text-muted mb-0">Различни продукти</p>
             </div>
         </div>
     </div>
-    {% else %}
-    <div class="col-12">
-        <div class="alert alert-info text-center">
-            <h4>Нема извршени експерименти</h4>
-            <p>Започнете со користење на виртуелната лабораторија за да создадете експерименти.</p>
-            <a href="/laboratory" class="btn btn-primary">Отвори лабораторија</a>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning">{{ experiments|selectattr('safety_warning')|list|length }}</h3>
+                <p class="text-muted mb-0">Со предупредувања</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-info">
+                    {% if experiments[0].participation_timestamp %}
+                        {{ experiments[0].participation_timestamp.strftime('%d.%m') }}
+                    {% elif experiments[0].time_stamp %}
+                        {{ experiments[0].time_stamp.strftime('%d.%m') }}
+                    {% endif %}
+                </h3>
+                <p class="text-muted mb-0">Последен експеримент</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Листа на експерименти -->
+<div class="row mt-4">
+    {% for experiment in experiments %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-gradient" style="background: linear-gradient(45deg, #667eea, #764ba2);">
+                <div class="d-flex justify-content-between align-items-center text-white">
+                    <span><i class="bi bi-flask"></i> Експеримент #{{ experiment.experiment_id }}</span>
+                    <small>
+                        {% if experiment.participation_timestamp %}
+                            {{ experiment.participation_timestamp.strftime('%d.%m.%Y') }}
+                        {% elif experiment.time_stamp %}
+                            {{ experiment.time_stamp.strftime('%d.%m.%Y') }}
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Реакција -->
+                <div class="reaction-equation text-center mb-3 p-3 bg-light rounded">
+                    <strong style="font-size: 18px; color: #764ba2;">
+                        {{ experiment.element1_symbol }} + {{ experiment.element2_symbol }} → {{ experiment.product }}
+                    </strong>
+                </div>
+                
+                <!-- Детали -->
+                <div class="experiment-details">
+                    <p class="mb-2">
+                        <strong>Реактанти:</strong><br>
+                        <span class="text-muted">{{ experiment.element1_name }} + {{ experiment.element2_name }}</span>
+                    </p>
+                    
+                    <p class="mb-2">
+                        <strong>Услови:</strong><br>
+                        <span class="text-muted">{{ experiment.conditions or 'Стандардни услови' }}</span>
+                    </p>
+                    
+                    <p class="mb-2">
+                        <strong>Резултат:</strong><br>
+                        <span class="text-muted">{{ experiment.result[:80] }}{% if experiment.result|length > 80 %}...{% endif %}</span>
+                    </p>
+                    
+                    {% if experiment.safety_warning %}
+                    <div class="alert alert-warning py-2 px-2 mb-2">
+                        <small><strong>⚠️ Безбедност:</strong> {{ experiment.safety_warning }}</small>
+                    </div>
+                    {% endif %}
+                    
+                    {% if experiment.participation_timestamp or experiment.time_stamp %}
+                    <p class="text-muted text-center mt-3 mb-0">
+                        <small>
+                            <i class="bi bi-clock"></i> 
+                            {% if experiment.participation_timestamp %}
+                                {{ experiment.participation_timestamp.strftime('%H:%M:%S') }}
+                            {% else %}
+                                {{ experiment.time_stamp.strftime('%H:%M:%S') }}
+                            {% endif %}
+                        </small>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
     {% endfor %}
 </div>
-
-{% if experiments %}
+{% else %}
+<!-- Нема експерименти -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card bg-light">
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-3">
-                        <h4>{{ experiments|length }}</h4>
-                        <p class="text-muted">Вкупно експерименти</p>
-                    </div>
-                    <div class="col-md-3">
-                        <h4>{{ experiments|map(attribute='product')|unique|list|length }}</h4>
-                        <p class="text-muted">Различни продукти</p>
-                    </div>
-                    <div class="col-md-3">
-                        <h4>{{ experiments|selectattr('safety_warning')|list|length }}</h4>
-                        <p class="text-muted">Со безбедносни предупредувања</p>
-                    </div>
-                    <div class="col-md-3">
-                        <h4>{{ experiments[0].participation_timestamp.strftime('%B %Y') if experiments }}</h4>
-                        <p class="text-muted">Последна активност</p>
-                    </div>
-                </div>
-            </div>
+        <div class="alert alert-info text-center">
+            <h4>📚 Немате извршено експерименти</h4>
+            <p>Започнете со користење на виртуелната лабораторија за да создадете ваши експерименти.</p>
+            <a href="/laboratory" class="btn btn-primary">🔬 Отвори лабораторија</a>
         </div>
     </div>
 </div>
 {% endif %}
 
-<div class="mt-4">
-    <a href="/dashboard" class="btn btn-secondary">Назад до Dashboard</a>
-    <a href="/laboratory" class="btn btn-success">Нов експеримент</a>
+<div class="mt-4 text-center">
+    <a href="/dashboard" class="btn btn-secondary">🏠 Dashboard</a>
+    <a href="/laboratory" class="btn btn-success">➕ Нов експеримент</a>
+    {% if user_role == 'teacher' %}
+    <a href="/experiments" class="btn btn-info">📋 Сите експерименти</a>
+    {% endif %}
 </div>
-
-<script>
-function showExperimentDetails(experimentId) {
-    // Ова може да се прошири со modal или redirect
-    alert('Експеримент #' + experimentId + '\nДетални информации ќе бидат додадени во иднина.');
-}
-</script>
 {% endblock %}

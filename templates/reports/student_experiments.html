@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Експерименти на студенти{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>📊 Експерименти на моите студенти</h2>
+        <p class="text-muted">Детален преглед на активности</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Студент</th>
+                        <th>Експеримент</th>
+                        <th>Реакција</th>
+                        <th>Продукт</th>
+                        <th>Датум</th>
+                        <th>Резултат</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exp in student_experiments %}
+                    <tr>
+                        <td>
+                            <strong>{{ exp.student_name }}</strong><br>
+                            <small class="text-muted">ID: {{ exp.student_id }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">#{{ exp.experiment_id }}</span>
+                        </td>
+                        <td>
+                            {{ exp.element1_symbol }} + {{ exp.element2_symbol }}
+                        </td>
+                        <td>
+                            <span class="text-success">{{ exp.product }}</span>
+                        </td>
+                        <td>
+                            {{ exp.participation_date.strftime('%d.%m.%Y %H:%M') if exp.participation_date }}
+                        </td>
+                        <td>
+                            <small>{{ exp.result[:50] }}...</small>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            Нема експерименти од студенти
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4 text-center">
+    <a href="/reports" class="btn btn-secondary">Назад кон извештаи</a>
+    <a href="/my_students" class="btn btn-info">Види студенти</a>
+</div>
+{% endblock %}

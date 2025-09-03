@@ -3,6 +3,32 @@ from psycopg2.extras import RealDictCursor
 
 class DatabaseManager:
     @staticmethod
+    def get_connection():
+        # Ова е новиот метод што ќе реши грешката
+        return psycopg2.connect(
+            host='localhost',
+            port=9999,
+            database='db_202425z_va_prj_simlab25',
+            user='db_202425z_va_prj_simlab25_owner',
+            password='c9e5ebb7d332',
+            cursor_factory=RealDictCursor
+        )
+
+    @staticmethod
+    def execute_query(query, params=None):
+        try:
+            conn = DatabaseManager.get_connection()
+            cursor = conn.cursor()
+            cursor.execute(query, params or ())
+            result = cursor.fetchall()
+            cursor.close()
+            conn.close()
+            return result
+        except Exception as e:
+            print(f"Грешка во execute_query: {e}")
+            return None
+        
+    @staticmethod
     def test_connection():
         try:
             conn = psycopg2.connect(
@@ -923,4 +949,429 @@ class DatabaseManager:
         except Exception as e:
             print(f"Грешка: {e}")
             return None
-                            
+    
+    # Додајте овие нови методи во DatabaseManager класата (database_manager.py)
+
+    @staticmethod
+    def create_reaction_and_experiment(teacher_id, element1_id, element2_id, product, conditions, safety_warning=None):
+        """Креирај реакција и автоматски креирај експеримент (за професори)"""
+        try:
+            conn = psycopg2.connect(
+                host='localhost', port=9999,
+                database='db_202425z_va_prj_simlab25',
+                user='db_202425z_va_prj_simlab25_owner',
+                password='c9e5ebb7d332'
+            )
+            cursor = conn.cursor()
+            
+            # Прво креирај реакција
+            cursor.execute('''
+                INSERT INTO reaction (teacher_id, element1_id, element2_id, product, conditions)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING reaction_id
+            ''', (teacher_id, element1_id, element2_id, product, conditions))
+            
+            reaction_id = cursor.fetchone()[0]
+            
+            # Автоматски креирај експеримент за оваа реакција
+            cursor.execute('''
+                INSERT INTO experiment (teacher_id, reaction_id, result, safety_warning, time_stamp)
+                VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+                RETURNING experiment_id
+            ''', (teacher_id, reaction_id, 
+                f'Експеримент за реакција: {product}', 
+                safety_warning or 'Стандардни безбедносни мерки'))
+            
+            experiment_id = cursor.fetchone()[0]
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            return {'reaction_id': reaction_id, 'experiment_id': experiment_id}
+        except Exception as e:
+            print(f"Грешка при креирање реакција и експеримент: {e}")
+            return None
+
+    @staticmethod
+    def get_experiment_by_reaction(reaction_id):
+        """Најди експеримент за дадена реакција"""
+        try:
+            conn = psycopg2.connect(
+                host='localhost', port=9999,
+                database='db_202425z_va_prj_simlab25',
+                user='db_202425z_va_prj_simlab25_owner',
+                password='c9e5ebb7d332',
+                cursor_factory=RealDictCursor
+            )
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM experiment 
+                WHERE reaction_id = %s
+                ORDER BY time_stamp DESC
+                LIMIT 1
+            ''', (reaction_id,))
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return dict(result) if result else None
+        except Exception as e:
+            print(f"Грешка: {e}")
+            return None
+
+    @staticmethod
+    def get_students_experiments_for_teacher(teacher_id):
+        """Земи експерименти на студенти за конкретен професор"""
+        try:
+            conn = psycopg2.connect(
+                host='localhost', port=9999,
+                database='db_202425z_va_prj_simlab25',
+                user='db_202425z_va_prj_simlab25_owner',
+                password='c9e5ebb7d332',
+                cursor_factory=RealDictCursor
+            )
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    u.user_name || ' ' || u.user_surname AS student_name,
+                    s.student_id,
+                    e.experiment_id,
+                    e.result,
+                    e.time_stamp,
+                    r.product,
+                    el1.symbol as element1_symbol,
+                    el2.symbol as element2_symbol,
+                    up.participation_timestamp as participation_date
+                FROM student s
+                JOIN "User" u ON s.student_id = u.user_id
+                JOIN userparticipatesinexperiment up ON s.student_id = up.user_id
+                JOIN experiment e ON up.experiment_id = e.experiment_id
+                JOIN reaction r ON e.reaction_id = r.reaction_id
+                JOIN elements el1 ON r.element1_id = el1.element_id
+                JOIN elements el2 ON r.element2_id = el2.element_id
+                WHERE s.teacher_id = %s
+                ORDER BY up.participation_timestamp DESC
+            ''', (teacher_id,))
+            result = cursor.fetchall()
+            cursor.close()
+            conn.close()
+            return result
+        except Exception as e:
+            print(f"Грешка: {e}")
+            return []
+    
+    @staticmethod
+    def get_student_statistics(student_id):
+        """Земи статистики за студент"""
+        try:
+            conn = psycopg2.connect(
+                host='localhost', port=9999,
+                database='db_202425z_va_prj_simlab25',
+                user='db_202425z_va_prj_simlab25_owner',
+                password='c9e5ebb7d332',
+                cursor_factory=RealDictCursor
+            )
+            cursor = conn.cursor()
+            
+            # Статистики за студентот
+            cursor.execute('''
+                SELECT 
+                    (SELECT COUNT(*) FROM userparticipatesinexperiment WHERE user_id = %s) as experiment_count,
+                    (SELECT COUNT(*) FROM userviewselement WHERE user_id = %s) as element_count,
+                    (SELECT COUNT(*) FROM userviewslabequipment WHERE user_id = %s) as equipment_count,
+                    (SELECT COUNT(DISTINCT r.reaction_id) 
+                    FROM userparticipatesinexperiment up
+                    JOIN experiment e ON up.experiment_id = e.experiment_id
+                    JOIN reaction r ON e.reaction_id = r.reaction_id
+                    WHERE up.user_id = %s) as reaction_count
+            ''', (student_id, student_id, student_id, student_id))
+            
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return dict(result) if result else {'experiment_count': 0, 'element_count': 0, 'equipment_count': 0, 'reaction_count': 0}
+        except Exception as e:
+            print(f"Грешка: {e}")
+            return {'experiment_count': 0, 'element_count': 0, 'equipment_count': 0, 'reaction_count': 0}
+
+    @staticmethod
+    def get_teacher_dashboard_statistics(teacher_id):
+        """Земи статистики за професорски dashboard"""
+        try:
+            conn = psycopg2.connect(
+                host='localhost', port=9999,
+                database='db_202425z_va_prj_simlab25',
+                user='db_202425z_va_prj_simlab25_owner',
+                password='c9e5ebb7d332',
+                cursor_factory=RealDictCursor
+            )
+            cursor = conn.cursor()
+            
+            # Број на студенти
+            cursor.execute('SELECT COUNT(*) as count FROM student WHERE teacher_id = %s', (teacher_id,))
+            student_count = cursor.fetchone()['count']
+            
+            # Број на креирани реакции
+            cursor.execute('SELECT COUNT(*) as count FROM reaction WHERE teacher_id = %s', (teacher_id,))
+            reaction_count = cursor.fetchone()['count']
+            
+            # Број на експерименти
+            cursor.execute('SELECT COUNT(*) as count FROM experiment WHERE teacher_id = %s', (teacher_id,))
+            experiment_count = cursor.fetchone()['count']
+            
+            # Активности денес (експерименти од студенти денес)
+            cursor.execute('''
+                SELECT COUNT(*) as count 
+                FROM userparticipatesinexperiment up
+                JOIN student s ON up.user_id = s.student_id
+                WHERE s.teacher_id = %s 
+                AND DATE(up.participation_timestamp) = CURRENT_DATE
+            ''', (teacher_id,))
+            activity_today = cursor.fetchone()['count']
+            
+            cursor.close()
+            conn.close()
+            
+            return {
+                'student_count': student_count,
+                'reaction_count': reaction_count,
+                'experiment_count': experiment_count,
+                'activity_count': activity_today
+            }
+        except Exception as e:
+            print(f"Грешка: {e}")
+            return {
+                'student_count': 0,
+                'reaction_count': 0,
+                'experiment_count': 0,
+                'activity_count': 0
+            }
+        
+    # Додајте ги овие методи во вашиот DatabaseManager класа (database_manager.py)
+
+    @staticmethod
+    def create_reaction_and_experiment(teacher_id, element1_id, element2_id, product, conditions, safety_warning=None):
+        """Креирај реакција и автоматски креирај експеримент"""
+        try:
+            conn = psycopg2.connect(
+                host='localhost', port=9999,
+                database='db_202425z_va_prj_simlab25',
+                user='db_202425z_va_prj_simlab25_owner',
+                password='c9e5ebb7d332'
+            )
+            cursor = conn.cursor()
+            
+            # Прво креирај реакција
+            cursor.execute('''
+                INSERT INTO reaction (teacher_id, element1_id, element2_id, product, conditions)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING reaction_id
+            ''', (teacher_id, element1_id, element2_id, product, conditions))
+            
+            reaction_id = cursor.fetchone()[0]
+            
+            # Автоматски креирај експеримент за оваа реакција
+            cursor.execute('''
+                INSERT INTO experiment (teacher_id, reaction_id, result, safety_warning, time_stamp)
+                VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+                RETURNING experiment_id
+            ''', (teacher_id, reaction_id, 
+                f'Експеримент за: {product}', 
+                safety_warning or 'Стандардни безбедносни мерки'))
+            
+            experiment_id = cursor.fetchone()[0]
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            print(f"Успешно креирани: Реакција #{reaction_id} и Експеримент #{experiment_id}")
+            return {'reaction_id': reaction_id, 'experiment_id': experiment_id}
+        except Exception as e:
+            print(f"Грешка при креирање реакција и експеримент: {e}")
+            if conn:
+                conn.rollback()
+                conn.close()
+            return None
+
+    @staticmethod
+    def get_experiment_by_reaction(reaction_id):
+        """Најди експеримент за дадена реакција"""
+        try:
+            conn = psycopg2.connect(
+                host='localhost', port=9999,
+                database='db_202425z_va_prj_simlab25',
+                user='db_202425z_va_prj_simlab25_owner',
+                password='c9e5ebb7d332',
+                cursor_factory=RealDictCursor
+            )
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM experiment 
+                WHERE reaction_id = %s
+                ORDER BY time_stamp DESC
+                LIMIT 1
+            ''', (reaction_id,))
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return dict(result) if result else None
+        except Exception as e:
+            print(f"Грешка при барање експеримент: {e}")
+            return None
+
+    @staticmethod
+    def get_student_statistics(student_id):
+        """Земи статистики за студент"""
+        try:
+            conn = psycopg2.connect(
+                host='localhost', port=9999,
+                database='db_202425z_va_prj_simlab25',
+                user='db_202425z_va_prj_simlab25_owner',
+                password='c9e5ebb7d332',
+                cursor_factory=RealDictCursor
+            )
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT 
+                    (SELECT COUNT(*) FROM userparticipatesinexperiment WHERE user_id = %s) as experiment_count,
+                    (SELECT COUNT(*) FROM userviewselement WHERE user_id = %s) as element_count,
+                    (SELECT COUNT(*) FROM userviewslabequipment WHERE user_id = %s) as equipment_count,
+                    (SELECT COUNT(DISTINCT r.reaction_id) 
+                    FROM userparticipatesinexperiment up
+                    JOIN experiment e ON up.experiment_id = e.experiment_id
+                    JOIN reaction r ON e.reaction_id = r.reaction_id
+                    WHERE up.user_id = %s) as reaction_count
+            ''', (student_id, student_id, student_id, student_id))
+            
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return dict(result) if result else {'experiment_count': 0, 'element_count': 0, 'equipment_count': 0, 'reaction_count': 0}
+        except Exception as e:
+            print(f"Грешка при статистики за студент: {e}")
+            return {'experiment_count': 0, 'element_count': 0, 'equipment_count': 0, 'reaction_count': 0}
+
+    @staticmethod
+    def get_teacher_dashboard_statistics(teacher_id):
+        """Земи статистики за професорски dashboard"""
+        try:
+            conn = psycopg2.connect(
+                host='localhost', port=9999,
+                database='db_202425z_va_prj_simlab25',
+                user='db_202425z_va_prj_simlab25_owner',
+                password='c9e5ebb7d332',
+                cursor_factory=RealDictCursor
+            )
+            cursor = conn.cursor()
+            
+            cursor.execute('SELECT COUNT(*) as count FROM student WHERE teacher_id = %s', (teacher_id,))
+            student_count = cursor.fetchone()['count']
+            
+            cursor.execute('SELECT COUNT(*) as count FROM reaction WHERE teacher_id = %s', (teacher_id,))
+            reaction_count = cursor.fetchone()['count']
+            
+            cursor.execute('SELECT COUNT(*) as count FROM experiment WHERE teacher_id = %s', (teacher_id,))
+            experiment_count = cursor.fetchone()['count']
+            
+            cursor.execute('''
+                SELECT COUNT(*) as count 
+                FROM userparticipatesinexperiment up
+                JOIN student s ON up.user_id = s.student_id
+                WHERE s.teacher_id = %s 
+                AND DATE(up.participation_timestamp) = CURRENT_DATE
+            ''', (teacher_id,))
+            activity_today = cursor.fetchone()['count']
+            
+            cursor.close()
+            conn.close()
+            
+            return {
+                'student_count': student_count,
+                'reaction_count': reaction_count,
+                'experiment_count': experiment_count,
+                'activity_count': activity_today
+            }
+        except Exception as e:
+            print(f"Грешка при dashboard статистики: {e}")
+            return {
+                'student_count': 0,
+                'reaction_count': 0,
+                'experiment_count': 0,
+                'activity_count': 0
+            }
+
+    @staticmethod
+    def get_students_experiments_for_teacher(teacher_id):
+        """Земи експерименти на студенти за конкретен професор"""
+        try:
+            conn = psycopg2.connect(
+                host='localhost', port=9999,
+                database='db_202425z_va_prj_simlab25',
+                user='db_202425z_va_prj_simlab25_owner',
+                password='c9e5ebb7d332',
+                cursor_factory=RealDictCursor
+            )
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    u.user_name || ' ' || u.user_surname AS student_name,
+                    s.student_id,
+                    e.experiment_id,
+                    e.result,
+                    e.time_stamp,
+                    r.product,
+                    el1.symbol as element1_symbol,
+                    el2.symbol as element2_symbol,
+                    up.participation_timestamp as participation_date
+                FROM student s
+                JOIN "User" u ON s.student_id = u.user_id
+                JOIN userparticipatesinexperiment up ON s.student_id = up.user_id
+                JOIN experiment e ON up.experiment_id = e.experiment_id
+                JOIN reaction r ON e.reaction_id = r.reaction_id
+                JOIN elements el1 ON r.element1_id = el1.element_id
+                JOIN elements el2 ON r.element2_id = el2.element_id
+                WHERE s.teacher_id = %s
+                ORDER BY up.participation_timestamp DESC
+            ''', (teacher_id,))
+            result = cursor.fetchall()
+            cursor.close()
+            conn.close()
+            return result
+        except Exception as e:
+            print(f"Грешка: {e}")
+            return []
+    @staticmethod
+    def get_student_participation_experiments(student_id):
+        query = '''
+            SELECT ep.user_id,
+                r.product,
+                r.conditions,
+                el1.symbol AS element1_symbol,
+                el2.symbol AS element2_symbol,
+                el1.element_name AS element1_name,
+                el2.element_name AS element2_name,
+                e.result,
+                e.safety_warning,
+                e.time_stamp,
+                e.experiment_id
+            FROM userparticipatesinexperiment ep
+            JOIN experiment e ON ep.experiment_id = e.experiment_id
+            JOIN reaction r ON e.reaction_id = r.reaction_id
+            JOIN elements el1 ON r.element1_id = el1.element_id
+            JOIN elements el2 ON r.element2_id = el2.element_id
+            WHERE ep.user_id = %s
+            ORDER BY e.time_stamp DESC
+        '''
+        return DatabaseManager.execute_query(query, (student_id,))
+
+    @staticmethod
+    def execute_query(query, params=None):
+        conn = DatabaseManager.get_connection()
+        cur = conn.cursor()
+        cur.execute(query, params or ())
+        result = cur.fetchall()
+        cur.close()
+        conn.close()
+        return result

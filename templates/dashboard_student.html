@@ -9,78 +9,132 @@
     </div>
 </div>
 
+<!-- Главни картички -->
 <div class="row mt-4">
-    <div class="col-md-4">
-        <div class="card mb-3">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
             <div class="card-header bg-primary text-white">
-                <h5>Хемиски елементи</h5>
+                <h5><i class="bi bi-flask"></i> Хемиски елементи</h5>
             </div>
             <div class="card-body">
-                <p>Истражете ги достапните хемиски елементи</p>
+                <p>Истражете ги достапните хемиски елементи и нивните својства</p>
                 <a href="/elements" class="btn btn-primary">Прегледај елементи</a>
             </div>
         </div>
     </div>
     
-    <div class="col-md-4">
-        <div class="card mb-3">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
             <div class="card-header bg-success text-white">
-                <h5>Лабораториска опрема</h5>
+                <h5><i class="bi bi-tools"></i> Лабораториска опрема</h5>
             </div>
             <div class="card-body">
-                <p>Погледнете ја достапната опрема</p>
+                <p>Запознајте се со достапната лабораториска опрема</p>
                 <a href="/equipment" class="btn btn-success">Прегледај опрема</a>
             </div>
         </div>
     </div>
     
-    <div class="col-md-4">
-        <div class="card mb-3">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
             <div class="card-header bg-danger text-white">
-                <h5>Виртуелна лабораторија</h5>
+                <h5><i class="bi bi-radioactive"></i> Виртуелна лабораторија</h5>
             </div>
             <div class="card-body">
-                <p>Извршете хемиски експерименти</p>
+                <p>Симулирајте хемиски реакции и учествувајте во експерименти</p>
                 <a href="/laboratory" class="btn btn-danger">Отвори лабораторија</a>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-    <div class="card">
-        <div class="card-header bg-warning text-dark">
-            <h5>Мои експерименти</h5>
-        </div>
-        <div class="card-body">
-            <p>Прегледајте ги вашите експерименти</p>
-            <a href="/my-experiments" class="btn btn-warning">Види експерименти</a>
-        </div>
-    </div>
-</div>
 </div>
 
-<div class="row mt-3">
-    <div class="col-md-6">
-        <div class="card">
+<!-- Втор ред картички -->
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
             <div class="card-header bg-warning text-dark">
-                <h5>Мои експерименти</h5>
+                <h5><i class="bi bi-journal-text"></i> Мои експерименти</h5>
             </div>
             <div class="card-body">
-                <p>Прегледајте ги вашите експерименти</p>
+                <p>Прегледајте ги експериментите во кои сте учествувале</p>
                 <a href="/my-experiments" class="btn btn-warning">Види експерименти</a>
             </div>
         </div>
     </div>
     
-    <div class="col-md-6">
-        <div class="card">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
             <div class="card-header bg-info text-white">
-                <h5>Напредок</h5>
+                <h5><i class="bi bi-diagram-3"></i> Реакции</h5>
             </div>
             <div class="card-body">
-                <p>Следете го вашиот напредок</p>
-                <a href="/my-progress" class="btn btn-info">Види напредок</a>
+                <p>Прегледајте ги дефинираните хемиски реакции</p>
+                <a href="/reactions" class="btn btn-info">Види реакции</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header text-white" style="background: linear-gradient(45deg, #667eea, #764ba2);">
+                <h5><i class="bi bi-graph-up"></i> Мој напредок</h5>
+            </div>
+            <div class="card-body">
+                <p>Следете го вашиот напредок и активности</p>
+                <button class="btn btn-secondary" onclick="showProgress()">Види напредок</button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Статистики -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Брза статистика</h5>
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h4 id="exp-count">0</h4>
+                        <p class="text-muted">Мои експерименти</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 id="elem-count">0</h4>
+                        <p class="text-muted">Прегледани елементи</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 id="equip-count">0</h4>
+                        <p class="text-muted">Користена опрема</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 id="reaction-count">0</h4>
+                        <p class="text-muted">Симулирани реакции</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    
+// Функција за прикажување напредок
+function showProgress() {
+    alert('Функционалноста за напредок ќе биде достапна наскоро!');
+}
+
+// Вчитај статистики (може да се повика од backend)
+document.addEventListener('DOMContentLoaded', function() {
+    // Вчитај реални статистики
+    fetch('/api/dashboard-stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('exp-count').textContent = data.experiment_count || 0;
+            document.getElementById('elem-count').textContent = data.element_count || 0;
+            document.getElementById('equip-count').textContent = data.equipment_count || 0;
+            document.getElementById('reaction-count').textContent = data.reaction_count || 0;
+        })
+        .catch(error => console.error('Грешка при вчитување статистики:', error));
+});
+</script>
 {% endblock %}

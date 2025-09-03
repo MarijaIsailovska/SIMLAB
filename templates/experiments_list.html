@@ -1,53 +1,115 @@
 {% extends "base.html" %}
-{% block title %}Експерименти{% endblock %}
+{% block title %}Сите експерименти{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h2>Сите експерименти</h2>
-        <p class="text-muted">Листа на изведени експерименти во системот</p>
+        <h2>🧪 Сите експерименти во системот</h2>
+        <p class="text-muted">
+            {% if user_role == 'teacher' %}
+            Преглед на сите експерименти (професорски пристап)
+            {% else %}
+            Преглед на јавно достапни експерименти
+            {% endif %}
+        </p>
     </div>
 </div>
 
+{% if experiments %}
 <div class="row mt-3">
     {% for experiment in experiments %}
     <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between">
-                <h5>Експеримент #{{ experiment.experiment_id }}</h5>
-                <small class="text-muted">{{ experiment.time_stamp.strftime('%d.%m.%Y %H:%M') if experiment.time_stamp }}</small>
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <span class="badge bg-primary">#{{ experiment.experiment_id }}</span>
+                    {{ experiment.element1_symbol }} + {{ experiment.element2_symbol }}
+                </h5>
+                <small class="text-muted">
+                    {{ experiment.time_stamp.strftime('%d.%m.%Y') if experiment.time_stamp }}
+                </small>
             </div>
             <div class="card-body">
-                <h6 class="card-title text-primary">
-                    {{ experiment.element1_symbol }} + {{ experiment.element2_symbol }} → {{ experiment.product }}
+                <h6 class="card-title text-success">
+                    <strong>Продукт:</strong> {{ experiment.product }}
                 </h6>
                 
-                <p><strong>Реакција:</strong> {{ experiment.element1_name }} + {{ experiment.element2_name }}</p>
-                
-                <p><strong>Услови:</strong> {{ experiment.conditions or 'Стандардни услови' }}</p>
-                
-                <p><strong>Резултат:</strong> {{ experiment.result }}</p>
+                <div class="mb-3">
+                    <p class="mb-2">
+                        <strong>Реакција:</strong> 
+                        {{ experiment.element1_name }} + {{ experiment.element2_name }}
+                    </p>
+                    
+                    <p class="mb-2">
+                        <strong>Услови:</strong> 
+                        <span class="text-muted">{{ experiment.conditions or 'Стандардни услови' }}</span>
+                    </p>
+                    
+                    <p class="mb-2">
+                        <strong>Резултат:</strong> 
+                        <span class="text-muted">{{ experiment.result[:100] }}{% if experiment.result|length > 100 %}...{% endif %}</span>
+                    </p>
+                </div>
                 
                 {% if experiment.safety_warning %}
-                <div class="alert alert-warning alert-sm p-2">
-                    <strong>Безбедност:</strong> {{ experiment.safety_warning }}
+                <div class="alert alert-warning py-2 mb-3">
+                    <small><strong>⚠️ Безбедност:</strong> {{ experiment.safety_warning }}</small>
                 </div>
                 {% endif %}
                 
-                <p class="text-muted"><small>Креиран од: {{ experiment.created_by }}</small></p>
-                
-                <a href="/experiments/{{ experiment.experiment_id }}" class="btn btn-info btn-sm">Детали</a>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <strong>Креирано од:</strong> {{ experiment.created_by }}
+                    </small>
+                    <a href="/experiments/{{ experiment.experiment_id }}" class="btn btn-sm btn-outline-info">
+                        Детали →
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
-    {% else %}
-    <div class="col-12">
-        <div class="alert alert-info">Нема изведени експерименти во системот.</div>
     </div>
     {% endfor %}
 </div>
 
-<div class="mt-3">
-    <a href="/dashboard" class="btn btn-primary">Назад до Dashboard</a>
+<!-- Пагинација (ако има многу експерименти) -->
+{% if experiments|length > 12 %}
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        <li class="page-item disabled">
+            <a class="page-link" href="#" tabindex="-1">Previous</a>
+        </li>
+        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+        <li class="page-item"><a class="page-link" href="#">2</a></li>
+        <li class="page-item"><a class="page-link" href="#">3</a></li>
+        <li class="page-item">
+            <a class="page-link" href="#">Next</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <h4>Нема експерименти во системот</h4>
+            {% if user_role == 'teacher' %}
+            <p>Започнете со креирање на реакции и експерименти.</p>
+            <a href="/reactions/add" class="btn btn-primary">Додај реакција</a>
+            {% else %}
+            <p>Сè уште нема извршени експерименти. Бидете први!</p>
+            <a href="/laboratory" class="btn btn-primary">Отвори лабораторија</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="mt-4 text-center">
+    <a href="/dashboard" class="btn btn-secondary">🏠 Dashboard</a>
+    <a href="/laboratory" class="btn btn-success">🔬 Лабораторија</a>
+    {% if user_role == 'teacher' %}
+    <a href="/reactions" class="btn btn-info">⚗️ Реакции</a>
+    {% endif %}
 </div>
 {% endblock %}

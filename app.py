@@ -1,8 +1,7 @@
-from flask import Flask, render_template, jsonify, request, session
-from utils.database_manager import DatabaseManager
-import hashlib
-from utils.auth_manager import AuthManager
 from flask import Flask, render_template, jsonify, request, session, redirect
+from utils.database_manager import DatabaseManager
+from utils.auth_manager import AuthManager
+import hashlib
 
 app = Flask(__name__)
 app.secret_key = 'simlab-secret-key-2024'
@@ -73,8 +72,8 @@ def equipment():
         return render_template('equipment_list.html', equipment=[], error='Нема опрема во базата')
 
 @app.route('/reports/equipment-usage')
-def reports():
-    """SQL Извештаи"""
+def equipment_usage_report():
+    """SQL Извештаи за опрема"""
     usage_report = DatabaseManager.get_equipment_usage_report()
     if usage_report:
         return jsonify({
@@ -95,6 +94,7 @@ def reports():
             'status': 'error',
             'message': 'Грешка при генерирање на извештај'
         })
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -114,7 +114,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    teachers = DatabaseManager.get_all_teachers()  # Земи наставници
+    teachers = DatabaseManager.get_all_teachers()
     
     if request.method == 'POST':
         name = request.form['name']
@@ -124,7 +124,6 @@ def register():
         role = request.form['role']
         teacher_id = request.form.get('teacher_id') if role == 'student' else None
         
-        # Хеширај лозинка
         password_hash = AuthManager.hash_password(password)
         
         user_id = DatabaseManager.register_user(name, surname, email, password_hash, role, teacher_id)
@@ -142,16 +141,31 @@ def logout():
 
 @app.route('/dashboard')
 def dashboard():
+    """Dashboard со статистики според улога"""
     if 'user_id' not in session:
         return redirect('/login')
     
     if session['role'] == 'teacher':
-        # Dashboard за наставник
-        return render_template('dashboard_teacher.html', user_name=session['user_name'])
+        stats = None
+        try:
+            stats = DatabaseManager.get_teacher_dashboard_statistics(session['user_id'])
+        except:
+            stats = {'student_count': 0, 'reaction_count': 0, 'experiment_count': 0, 'activity_count': 0}
+        
+        return render_template('dashboard_teacher.html', 
+                             user_name=session['user_name'],
+                             stats=stats)
     else:
-        # Dashboard за студент
-        return render_template('dashboard_student.html', user_name=session['user_name'])
-    
+        stats = None
+        try:
+            stats = DatabaseManager.get_student_statistics(session['user_id'])
+        except:
+            stats = {'experiment_count': 0, 'element_count': 0, 'equipment_count': 0, 'reaction_count': 0}
+        
+        return render_template('dashboard_student.html', 
+                             user_name=session['user_name'],
+                             stats=stats)
+
 @app.route('/elements/add', methods=['GET', 'POST'])
 def add_element():
     if 'user_id' not in session or session['role'] != 'teacher':
@@ -168,7 +182,9 @@ def add_element():
         description = request.form['description']
         teacher_id = session['user_id']
         
-        element_id = DatabaseManager.add_element(symbol, name, atomic_number, atomic_weight,melting_point,boiling_point, hazard_type, description, teacher_id)
+        element_id = DatabaseManager.add_element(symbol, name, atomic_number, atomic_weight,
+                                                melting_point, boiling_point, hazard_type, 
+                                                description, teacher_id)
         
         if element_id:
             return redirect('/dashboard')
@@ -224,7 +240,6 @@ def element_detail(element_id):
     if 'user_id' not in session:
         return redirect('/login')
     
-    # Овде се случува tracking - кога корисникот кликне на "Детали"
     DatabaseManager.track_element_view(session['user_id'], element_id)
     
     element = DatabaseManager.get_element_by_id(element_id)
@@ -232,6 +247,7 @@ def element_detail(element_id):
         return render_template('element_detail.html', element=element, user_role=session['role'])
     else:
         return redirect('/elements')
+
 @app.route('/my_students')
 def my_students():
     if 'user_id' not in session or session['role'] != 'teacher':
@@ -257,7 +273,6 @@ def experiment_detail(experiment_id):
     if 'user_id' not in session:
         return redirect('/login')
     
-    # Земи детали за експериментот
     experiments = DatabaseManager.get_all_experiments()
     experiment = None
     for exp in experiments:
@@ -268,7 +283,6 @@ def experiment_detail(experiment_id):
     if not experiment:
         return redirect('/experiments')
     
-    # Земи ја опремата за експериментот
     equipment = DatabaseManager.get_experiment_equipment(experiment_id)
     
     return render_template('experiment_detail.html', 
@@ -296,7 +310,8 @@ def add_equipment():
         safety_info = request.form['safety_info']
         teacher_id = session['user_id']
         
-        equipment_id = DatabaseManager.add_lab_equipment(name, equipment_type, description, safety_info, teacher_id)
+        equipment_id = DatabaseManager.add_lab_equipment(name, equipment_type, description, 
+                                                        safety_info, teacher_id)
         
         if equipment_id:
             return redirect('/dashboard')
@@ -310,7 +325,6 @@ def equipment_detail(equipment_id):
     if 'user_id' not in session:
         return redirect('/login')
     
-    # Track дека корисникот ја погледнал опремата
     DatabaseManager.track_equipment_view(session['user_id'], equipment_id)
     
     equipment_data = DatabaseManager.get_all_equipment()
@@ -344,7 +358,8 @@ def edit_element(element_id):
         hazard_type = request.form['hazard_type']
         description = request.form['description']
         
-        if DatabaseManager.update_element(element_id, symbol, name, atomic_number, atomic_weight, melting_point, boiling_point, hazard_type, description):
+        if DatabaseManager.update_element(element_id, symbol, name, atomic_number, atomic_weight, 
+                                         melting_point, boiling_point, hazard_type, description):
             return redirect('/elements')
         else:
             return render_template('edit_element.html', element=element, error='Грешка при ажурирање')
@@ -373,7 +388,6 @@ def edit_equipment(equipment_id):
     
     return render_template('edit_equipment.html', equipment=equipment)
 
-
 @app.route('/reactions')
 def reactions():
     """Прикажи сите реакции"""
@@ -385,7 +399,7 @@ def reactions():
 
 @app.route('/reactions/add', methods=['GET', 'POST'])
 def add_reaction():
-    """Додај нова реакција - само за професори"""
+    """Додавање реакција со автоматско креирање експеримент"""
     if 'user_id' not in session or session['role'] != 'teacher':
         return redirect('/login')
     
@@ -396,14 +410,19 @@ def add_reaction():
         element2_id = int(request.form['element2_id'])
         product = request.form['product']
         conditions = request.form['conditions']
+        safety_warning = request.form.get('safety_warning', 'Стандардни безбедносни мерки')
         teacher_id = session['user_id']
         
-        reaction_id = DatabaseManager.add_reaction(teacher_id, element1_id, element2_id, product, conditions)
+        result = DatabaseManager.create_reaction_and_experiment(
+            teacher_id, element1_id, element2_id, product, conditions, safety_warning
+        )
         
-        if reaction_id:
+        if result:
             return redirect('/reactions')
         else:
-            return render_template('add_reaction.html', elements=elements, error='Грешка при додавање реакција')
+            return render_template('add_reaction.html', 
+                                 elements=elements, 
+                                 error='Грешка при додавање реакција и експеримент')
     
     return render_template('add_reaction.html', elements=elements)
 
@@ -415,12 +434,11 @@ def laboratory():
     
     elements = DatabaseManager.get_all_elements()
     
-    # Различни темплејти според улогата
     if session['role'] == 'teacher':
         return render_template('laboratory.html', 
                              elements=elements, 
                              user_role=session['role'])
-    else:  # student
+    else:
         return render_template('virtual_laboratory.html', 
                              elements=elements, 
                              user_role=session['role'])
@@ -435,16 +453,19 @@ def simulate_reaction():
     element1_symbol = data.get('element1')
     element2_symbol = data.get('element2')
     
-    # Проверка во базата за реакција
     reactions = DatabaseManager.get_all_reactions()
     for reaction in reactions:
         if ((reaction['element1_symbol'] == element1_symbol and reaction['element2_symbol'] == element2_symbol) or
             (reaction['element1_symbol'] == element2_symbol and reaction['element2_symbol'] == element1_symbol)):
+            
+            experiment = DatabaseManager.get_experiment_by_reaction(reaction['reaction_id'])
+            
             return jsonify({
                 'success': True,
                 'product': reaction['product'],
                 'conditions': reaction['conditions'],
                 'reaction_id': reaction['reaction_id'],
+                'experiment_id': experiment['experiment_id'] if experiment else None,
                 'elements': f"{reaction['element1_name']} + {reaction['element2_name']}"
             })
     
@@ -453,7 +474,6 @@ def simulate_reaction():
         'message': f'Реакцијата меѓу {element1_symbol} и {element2_symbol} не е дефинирана во системот.'
     })
 
-    
 @app.route('/api/check-reaction', methods=['POST'])
 def check_reaction():
     """API за проверка на реакција"""
@@ -464,7 +484,6 @@ def check_reaction():
     element1_symbol = data.get('element1')
     element2_symbol = data.get('element2')
     
-    # Најди реакција во базата
     reactions = DatabaseManager.get_all_reactions()
     for reaction in reactions:
         if ((reaction['element1_symbol'] == element1_symbol and reaction['element2_symbol'] == element2_symbol) or
@@ -502,7 +521,8 @@ def edit_reaction(reaction_id):
         if DatabaseManager.update_reaction(reaction_id, element1_id, element2_id, product, conditions):
             return redirect('/reactions')
         else:
-            return render_template('edit_reaction.html', reaction=reaction, elements=elements, error='Грешка при ажурирање')
+            return render_template('edit_reaction.html', reaction=reaction, elements=elements, 
+                                  error='Грешка при ажурирање')
     
     return render_template('edit_reaction.html', reaction=reaction, elements=elements)
 
@@ -515,52 +535,87 @@ def delete_reaction(reaction_id):
     if DatabaseManager.delete_reaction(reaction_id):
         return redirect('/reactions')
     else:
-        return redirect('/reactions')  # Со грешка, но сепак назад
+        return redirect('/reactions')
 
 @app.route('/save-experiment', methods=['POST'])
 def save_experiment():
-    """Зачувај симулација како експеримент"""
+    """Зачувување на учество во експеримент"""
     if 'user_id' not in session:
         return jsonify({'error': 'Неавторизиран пристап'})
     
     data = request.get_json()
     reaction_id = data.get('reaction_id')
-    result_description = data.get('result', 'Успешно извршена симулација')
-    safety_warning = data.get('safety_warning', 'Симулирана реакција - без реални ризици')
     
-    # За експерименти, teacher_id е секогаш потребен
-    # Ако е студент, користи го неговиот teacher_id
-    if session['role'] == 'teacher':
-        teacher_id = session['user_id']
-    else:
-        # Земи го teacher_id на студентот
-        student_info = DatabaseManager.get_user_by_id(session['user_id'])
-        teacher_id = student_info.get('teacher_id') if student_info else None
+    experiment = DatabaseManager.get_experiment_by_reaction(reaction_id)
+    
+    if not experiment:
+        if session['role'] != 'teacher':
+            return jsonify({
+                'success': False, 
+                'message': 'Не постои експеримент за оваа реакција. Контактирајте го вашиот професор.'
+            })
         
-        if not teacher_id:
-            return jsonify({'success': False, 'message': 'Не може да се пронајде професор'})
-    
-    # Зачувај експеримент
-    experiment_id = DatabaseManager.insert_experiment(teacher_id, reaction_id, result_description, safety_warning)
+        result_description = data.get('result', 'Експериментална симулација')
+        safety_warning = data.get('safety_warning', 'Стандардни безбедносни мерки')
+        
+        experiment_id = DatabaseManager.insert_experiment(
+            session['user_id'], 
+            reaction_id, 
+            result_description, 
+            safety_warning
+        )
+    else:
+        experiment_id = experiment['experiment_id']
     
     if experiment_id:
-        # Додај учество на корисникот
         DatabaseManager.track_experiment_participation(session['user_id'], experiment_id)
         return jsonify({'success': True, 'experiment_id': experiment_id})
     else:
         return jsonify({'success': False, 'message': 'Грешка при зачувување'})
 
+@app.route('/reports/student_experiments')
+def student_experiments_report():
+    """Извештај за експерименти на студенти"""
+    if 'user_id' not in session or session['role'] != 'teacher':
+        return redirect('/login')
+    
+    teacher_id = session['user_id']
+    experiments = DatabaseManager.get_students_experiments_for_teacher(teacher_id)
+    
+    return render_template('reports/student_experiments.html', 
+                         student_experiments=experiments)
+
 @app.route('/my-experiments')
 def my_experiments():
-    """Мои експерименти - за тековен корисник"""
+    """Приказ на експерименти според улога"""
     if 'user_id' not in session:
         return redirect('/login')
     
-    experiments = DatabaseManager.get_user_experiments(session['user_id'])
+    if session['role'] == 'student':
+        # 🔑 земи експерименти каде студентот учествувал
+        experiments = DatabaseManager.get_student_participation_experiments(session['user_id'])
+    else:
+        # 🔑 земи експерименти креирани од професорот
+        experiments = DatabaseManager.get_user_experiments(session['user_id'])
+    
     return render_template('my_experiments.html', 
                          experiments=experiments, 
                          user_name=session['user_name'],
                          user_role=session['role'])
+
+
+@app.route('/api/dashboard-stats')
+def dashboard_stats():
+    """API endpoint за статистики на dashboard"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Неавторизиран пристап'})
+    
+    if session['role'] == 'student':
+        stats = DatabaseManager.get_student_statistics(session['user_id'])
+    else:
+        stats = DatabaseManager.get_teacher_dashboard_statistics(session['user_id'])
+    
+    return jsonify(stats)
 
 if __name__ == '__main__':
     app.run(debug=True)
