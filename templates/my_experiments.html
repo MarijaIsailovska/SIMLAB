@@ -6,7 +6,7 @@
     <div class="col-12">
         <h2>📊 Мои експерименти</h2>
         <p class="text-muted">
-            <strong>{{ user_name }}</strong> | 
+            <strong>{{ user_name }}</strong> |
             <span class="badge bg-{{ 'primary' if user_role == 'teacher' else 'success' }}">
                 {{ 'Професор' if user_role == 'teacher' else 'Студент' }}
             </span>
@@ -38,9 +38,9 @@
             <div class="card-body">
                 <h3 class="text-info">
                     {% if experiments[0].participation_timestamp %}
-                        {{ experiments[0].participation_timestamp.strftime('%d.%m') }}
+                    {{ experiments[0].participation_timestamp.strftime('%d.%m') }}
                     {% elif experiments[0].time_stamp %}
-                        {{ experiments[0].time_stamp.strftime('%d.%m') }}
+                    {{ experiments[0].time_stamp.strftime('%d.%m') }}
                     {% endif %}
                 </h3>
                 <p class="text-muted mb-0">Последен експеримент</p>
@@ -59,9 +59,9 @@
                     <span><i class="bi bi-flask"></i> Експеримент #{{ experiment.experiment_id }}</span>
                     <small>
                         {% if experiment.participation_timestamp %}
-                            {{ experiment.participation_timestamp.strftime('%d.%m.%Y') }}
+                        {{ experiment.participation_timestamp.strftime('%d.%m.%Y') }}
                         {% elif experiment.time_stamp %}
-                            {{ experiment.time_stamp.strftime('%d.%m.%Y') }}
+                        {{ experiment.time_stamp.strftime('%d.%m.%Y') }}
                         {% endif %}
                     </small>
                 </div>
@@ -73,40 +73,59 @@
                         {{ experiment.element1_symbol }} + {{ experiment.element2_symbol }} → {{ experiment.product }}
                     </strong>
                 </div>
-                
+
                 <!-- Детали -->
                 <div class="experiment-details">
                     <p class="mb-2">
                         <strong>Реактанти:</strong><br>
                         <span class="text-muted">{{ experiment.element1_name }} + {{ experiment.element2_name }}</span>
                     </p>
-                    
+
                     <p class="mb-2">
                         <strong>Услови:</strong><br>
                         <span class="text-muted">{{ experiment.conditions or 'Стандардни услови' }}</span>
                     </p>
-                    
+
                     <p class="mb-2">
                         <strong>Резултат:</strong><br>
-                        <span class="text-muted">{{ experiment.result[:80] }}{% if experiment.result|length > 80 %}...{% endif %}</span>
+                        <span class="text-muted">{{ experiment.result[:80] }}{% if experiment.result|length > 80 %}...{%
+                            endif %}</span>
                     </p>
-                    
+
                     {% if experiment.safety_warning %}
                     <div class="alert alert-warning py-2 px-2 mb-2">
                         <small><strong>⚠️ Безбедност:</strong> {{ experiment.safety_warning }}</small>
                     </div>
                     {% endif %}
-                    
+
                     {% if experiment.participation_timestamp or experiment.time_stamp %}
                     <p class="text-muted text-center mt-3 mb-0">
                         <small>
-                            <i class="bi bi-clock"></i> 
+                            <i class="bi bi-clock"></i>
                             {% if experiment.participation_timestamp %}
-                                {{ experiment.participation_timestamp.strftime('%H:%M:%S') }}
+                            {{ experiment.participation_timestamp.strftime('%H:%M:%S') }}
                             {% else %}
-                                {{ experiment.time_stamp.strftime('%H:%M:%S') }}
+                            {{ experiment.time_stamp.strftime('%H:%M:%S') }}
                             {% endif %}
                         </small>
+                    </p>
+                    {% endif %}
+                    {% if experiment.equipment and experiment.equipment|length > 0 %}
+                    <p class="mb-2">
+                        <strong>Опрема:</strong>
+                    <ul class="small text-muted mb-0">
+                        {% for eq in experiment.equipment %}
+                        <li>
+                            {{ eq.equipment_name }}
+                            {% if eq.type %}<span class="text-secondary">({{ eq.type }})</span>{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    </p>
+                    {% else %}
+                    <p class="mb-2">
+                        <strong>Опрема:</strong>
+                        <span class="text-muted">Нема евидентирана опрема</span>
                     </p>
                     {% endif %}
                 </div>

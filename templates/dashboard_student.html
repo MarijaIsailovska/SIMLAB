@@ -62,17 +62,7 @@
         </div>
     </div>
     
-    <div class="col-md-4 mb-3">
-        <div class="card h-100">
-            <div class="card-header bg-info text-white">
-                <h5><i class="bi bi-diagram-3"></i> Реакции</h5>
-            </div>
-            <div class="card-body">
-                <p>Прегледајте ги дефинираните хемиски реакции</p>
-                <a href="/reactions" class="btn btn-info">Види реакции</a>
-            </div>
-        </div>
-    </div>
+    
     
     <div class="col-md-4 mb-3">
         <div class="card h-100">
@@ -81,60 +71,9 @@
             </div>
             <div class="card-body">
                 <p>Следете го вашиот напредок и активности</p>
-                <button class="btn btn-secondary" onclick="showProgress()">Види напредок</button>
+                <a href="/my-experiments" class="btn btn-secondary">Види напредок</a>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Статистики -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card bg-light">
-            <div class="card-body">
-                <h5 class="card-title">Брза статистика</h5>
-                <div class="row text-center">
-                    <div class="col-md-3">
-                        <h4 id="exp-count">0</h4>
-                        <p class="text-muted">Мои експерименти</p>
-                    </div>
-                    <div class="col-md-3">
-                        <h4 id="elem-count">0</h4>
-                        <p class="text-muted">Прегледани елементи</p>
-                    </div>
-                    <div class="col-md-3">
-                        <h4 id="equip-count">0</h4>
-                        <p class="text-muted">Користена опрема</p>
-                    </div>
-                    <div class="col-md-3">
-                        <h4 id="reaction-count">0</h4>
-                        <p class="text-muted">Симулирани реакции</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    
-// Функција за прикажување напредок
-function showProgress() {
-    alert('Функционалноста за напредок ќе биде достапна наскоро!');
-}
-
-// Вчитај статистики (може да се повика од backend)
-document.addEventListener('DOMContentLoaded', function() {
-    // Вчитај реални статистики
-    fetch('/api/dashboard-stats')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('exp-count').textContent = data.experiment_count || 0;
-            document.getElementById('elem-count').textContent = data.element_count || 0;
-            document.getElementById('equip-count').textContent = data.equipment_count || 0;
-            document.getElementById('reaction-count').textContent = data.reaction_count || 0;
-        })
-        .catch(error => console.error('Грешка при вчитување статистики:', error));
-});
-</script>
 {% endblock %}

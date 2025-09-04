@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-8 offset-md-2">
+    <div class="col-md-10 offset-md-1">
         <div class="card">
             <div class="card-header bg-primary text-white">
                 <h4>Додај нова реакција и експеримент</h4>
@@ -17,45 +17,66 @@
                     <div class="row">
                         <div class="col-md-6">
                             <h5 class="text-primary mb-3">Реактанти</h5>
-                            
-                            <div class="form-group">
+                            <div class="form-group mb-3">
                                 <label for="element1_id">Прв елемент:</label>
                                 <select class="form-control" name="element1_id" id="element1_id" required>
                                     <option value="">-- Избери елемент --</option>
                                     {% for element in elements %}
-                                    <option value="{{ element.element_id }}">
-                                        {{ element.symbol }} - {{ element.element_name }}
-                                    </option>
+                                    <option value="{{ element.element_id }}">{{ element.symbol }} - {{ element.element_name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
-                            
-                            <div class="form-group">
+                            <div class="form-group mb-3">
                                 <label for="element2_id">Втор елемент:</label>
                                 <select class="form-control" name="element2_id" id="element2_id" required>
                                     <option value="">-- Избери елемент --</option>
                                     {% for element in elements %}
-                                    <option value="{{ element.element_id }}">
-                                        {{ element.symbol }} - {{ element.element_name }}
-                                    </option>
+                                    <option value="{{ element.element_id }}">{{ element.symbol }} - {{ element.element_name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                         </div>
                         
                         <div class="col-md-6">
-                            <h5 class="text-success mb-3">Резултати</h5>
-                            
-                            <div class="form-group">
-                                <label for="product">Продукт на реакцијата:</label>
-                                <input type="text" class="form-control" name="product" id="product" 
-                                       placeholder="пр. H2O, NaCl, CO2" required>
+                            <h5 class="text-success mb-3">Реакција</h5>
+                            <div class="form-group mb-3">
+                                <label for="product">Продукт (формула):</label>
+                                <input type="text" class="form-control" name="product" id="product" placeholder="пр. H2O, NaCl, CO2">
                             </div>
-                            
-                            <div class="form-group">
-                                <label for="conditions">Услови за реакцијата:</label>
-                                <textarea class="form-control" name="conditions" id="conditions" rows="3"
-                                          placeholder="Опишете температура, притисок, катализатори...">Стандардни услови</textarea>
+                            <div class="form-group mb-3">
+                                <label for="conditions">Услови:</label>
+                                <textarea class="form-control" name="conditions" id="conditions" rows="2" placeholder="Општи услови">Стандардни услови</textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" name="temperature" placeholder="Темп. °C">
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" name="pressure" placeholder="Притисок (atm)">
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" name="catalyst" placeholder="Катализатор">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-info mb-3">Експеримент</h5>
+                            <div class="form-group mb-3">
+                                <label for="experiment_result">Опис на експериментот:</label>
+                                <textarea class="form-control" name="experiment_result" id="experiment_result" rows="3" placeholder="Опишете чекори, забелешки, очекуван тек на експериментот..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5 class="text-warning mb-3">Безбедност</h5>
+                            <div class="form-group mb-3">
+                                <label for="safety_warning">Безбедносни предупредувања:</label>
+                                <textarea class="form-control" name="safety_warning" id="safety_warning" rows="3">Стандардни безбедносни мерки</textarea>
                             </div>
                         </div>
                     </div>
@@ -64,24 +85,27 @@
                     
                     <div class="row">
                         <div class="col-12">
-                            <h5 class="text-warning mb-3">Безбедносни информации за експериментот</h5>
-                            
+                            <h5 class="text-secondary mb-3">Лабораториска опрема</h5>
                             <div class="form-group">
-                                <label for="safety_warning">Безбедносни предупредувања:</label>
-                                <textarea class="form-control" name="safety_warning" id="safety_warning" rows="3"
-                                          placeholder="Внесете безбедносни мерки и предупредувања...">Стандардни безбедносни мерки</textarea>
+                                {% for item in equipment %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="equipment_ids" id="eq{{ item.equipment_id }}" value="{{ item.equipment_id }}">
+                                    <label class="form-check-label" for="eq{{ item.equipment_id }}">
+                                        {{ item.equipment_name }} ({{ item.type }})
+                                    </label>
+                                </div>
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
                     
-                    <div class="alert alert-info">
-                        <strong>Напомена:</strong> При креирање на реакцијата, автоматски ќе се креира и експеримент 
-                        кој студентите ќе можат да го извршуваат во виртуелната лабораторија.
+                    <div class="alert alert-info mt-3">
+                        <strong>Напомена:</strong> Со креирање на реакција, автоматски се додава и експеримент кој студентите можат да го извршуваат во виртуелната лабораторија.
                     </div>
                     
                     <div class="text-center">
                         <button type="submit" class="btn btn-success">
-                            <i class="bi bi-plus-circle"></i> Креирај реакција и експеримент
+                            <i class="bi bi-plus-circle"></i> Креирај
                         </button>
                         <a href="/reactions" class="btn btn-secondary">Откажи</a>
                     </div>
@@ -92,23 +116,15 @@
 </div>
 
 <script>
-// Провери дали се избрани различни елементи
-document.getElementById('element1_id').addEventListener('change', function() {
-    validateElements();
-});
-
-document.getElementById('element2_id').addEventListener('change', function() {
-    validateElements();
-});
-
 function validateElements() {
     const elem1 = document.getElementById('element1_id').value;
     const elem2 = document.getElementById('element2_id').value;
-    
     if (elem1 && elem2 && elem1 === elem2) {
         alert('Мора да изберете два различни елементи!');
         document.getElementById('element2_id').value = '';
     }
 }
+document.getElementById('element1_id').addEventListener('change', validateElements);
+document.getElementById('element2_id').addEventListener('change', validateElements);
 </script>
 {% endblock %}

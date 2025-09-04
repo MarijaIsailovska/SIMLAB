@@ -56,14 +56,28 @@
                     <small><strong>⚠️ Безбедност:</strong> {{ experiment.safety_warning }}</small>
                 </div>
                 {% endif %}
-                
+                {% if experiment.equipment and experiment.equipment|length > 0 %}
+                    <p class="mb-2">
+                        <strong>Опрема:</strong>
+                    <ul class="small text-muted mb-0">
+                        {% for eq in experiment.equipment %}
+                        <li>
+                            {{ eq.equipment_name }}
+                            {% if eq.type %}<span class="text-secondary">({{ eq.type }})</span>{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    </p>
+                    {% else %}
+                    <p class="mb-2">
+                        <strong>Опрема:</strong>
+                        <span class="text-muted">Нема евидентирана опрема</span>
+                    </p>
+                    {% endif %}
                 <div class="d-flex justify-content-between align-items-center">
                     <small class="text-muted">
                         <strong>Креирано од:</strong> {{ experiment.created_by }}
                     </small>
-                    <a href="/experiments/{{ experiment.experiment_id }}" class="btn btn-sm btn-outline-info">
-                        Детали →
-                    </a>
                 </div>
             </div>
         </div>
