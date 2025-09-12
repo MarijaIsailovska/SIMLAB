@@ -2,129 +2,192 @@
 {% block title %}Додај нова реакција{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-10 offset-md-1">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h4>Додај нова реакција и експеримент</h4>
-            </div>
-            <div class="card-body">
-                {% if error %}
-                <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
-                
-                <form method="POST">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5 class="text-primary mb-3">Реактанти</h5>
-                            <div class="form-group mb-3">
-                                <label for="element1_id">Прв елемент:</label>
-                                <select class="form-control" name="element1_id" id="element1_id" required>
-                                    <option value="">-- Избери елемент --</option>
-                                    {% for element in elements %}
-                                    <option value="{{ element.element_id }}">{{ element.symbol }} - {{ element.element_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="form-group mb-3">
-                                <label for="element2_id">Втор елемент:</label>
-                                <select class="form-control" name="element2_id" id="element2_id" required>
-                                    <option value="">-- Избери елемент --</option>
-                                    {% for element in elements %}
-                                    <option value="{{ element.element_id }}">{{ element.symbol }} - {{ element.element_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <h5 class="text-success mb-3">Реакција</h5>
-                            <div class="form-group mb-3">
-                                <label for="product">Продукт (формула):</label>
-                                <input type="text" class="form-control" name="product" id="product" placeholder="пр. H2O, NaCl, CO2">
-                            </div>
-                            <div class="form-group mb-3">
-                                <label for="conditions">Услови:</label>
-                                <textarea class="form-control" name="conditions" id="conditions" rows="2" placeholder="Општи услови">Стандардни услови</textarea>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4 mb-2">
-                                    <input type="text" class="form-control" name="temperature" placeholder="Темп. °C">
-                                </div>
-                                <div class="col-md-4 mb-2">
-                                    <input type="text" class="form-control" name="pressure" placeholder="Притисок (atm)">
-                                </div>
-                                <div class="col-md-4 mb-2">
-                                    <input type="text" class="form-control" name="catalyst" placeholder="Катализатор">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5 class="text-info mb-3">Експеримент</h5>
-                            <div class="form-group mb-3">
-                                <label for="experiment_result">Опис на експериментот:</label>
-                                <textarea class="form-control" name="experiment_result" id="experiment_result" rows="3" placeholder="Опишете чекори, забелешки, очекуван тек на експериментот..."></textarea>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <h5 class="text-warning mb-3">Безбедност</h5>
-                            <div class="form-group mb-3">
-                                <label for="safety_warning">Безбедносни предупредувања:</label>
-                                <textarea class="form-control" name="safety_warning" id="safety_warning" rows="3">Стандардни безбедносни мерки</textarea>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="row">
-                        <div class="col-12">
-                            <h5 class="text-secondary mb-3">Лабораториска опрема</h5>
-                            <div class="form-group">
-                                {% for item in equipment %}
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="equipment_ids" id="eq{{ item.equipment_id }}" value="{{ item.equipment_id }}">
-                                    <label class="form-check-label" for="eq{{ item.equipment_id }}">
-                                        {{ item.equipment_name }} ({{ item.type }})
-                                    </label>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-info mt-3">
-                        <strong>Напомена:</strong> Со креирање на реакција, автоматски се додава и експеримент кој студентите можат да го извршуваат во виртуелната лабораторија.
-                    </div>
-                    
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-success">
-                            <i class="bi bi-plus-circle"></i> Креирај
-                        </button>
-                        <a href="/reactions" class="btn btn-secondary">Откажи</a>
-                    </div>
-                </form>
-            </div>
-        </div>
+<style>
+  .hero{background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;border-radius:18px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .pill{width:48px;height:48px;border-radius:12px;background:#ffffff22;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .type-badge{background:#ffffff22;color:#fff;border-radius:999px;padding:6px 12px;font-weight:600}
+  .wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-top:16px}
+  @media (max-width: 992px){.wrap{grid-template-columns:1fr}}
+  .card.block{border:0;border-radius:16px;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .section-title{font-weight:800;margin-bottom:.35rem}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;margin:4px;border-radius:999px;background:#eef2ff;color:#3f51b5;font-weight:600;cursor:pointer;border:1px solid rgba(63,81,181,.25);user-select:none;font-size:.9rem}
+  .eq-preview{font-weight:800;font-size:18px;background:#f8f9fa;border:1px solid #edf0f4;border-radius:12px;padding:10px 12px}
+  .sticky-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid #eef1f4;padding:12px 0;margin-top:8px}
+  .equip-grid{max-height:340px;overflow:auto;border:1px solid #eef1f4;border-radius:12px;padding:10px}
+</style>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="d-flex align-items-center gap-3">
+    <div class="pill"><i class="bi bi-diagram-3"></i></div>
+    <div>
+      <h2 class="mb-0 text-truncate">Додај нова реакција</h2>
+      <div class="small opacity-75">Реактанти, услови и поврзан експеримент</div>
     </div>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span class="type-badge">Полиња со <b>*</b> се задолжителни</span>
+    <a href="/reactions" class="btn btn-light btn-sm fw-semibold"><i class="bi bi-list"></i> Сите реакции</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- ЛЕВО: Реактанти + Реакција -->
+  <div class="card block">
+    <div class="card-body">
+      {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+      <h5 class="section-title"><i class="bi bi-flask"></i> Реактанти</h5>
+
+      <form method="POST" id="add-reaction-form" novalidate>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Прв елемент *</label>
+            <select class="form-select" name="element1_id" id="element1_id" required>
+              <option value="">-- Избери елемент --</option>
+              {% for element in elements %}
+              <option value="{{ element.element_id }}"
+                      data-symbol="{{ element.symbol }}"
+                      data-name="{{ element.element_name }}">
+                {{ element.symbol }} — {{ element.element_name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Втор елемент *</label>
+            <select class="form-select" name="element2_id" id="element2_id" required>
+              <option value="">-- Избери елемент --</option>
+              {% for element in elements %}
+              <option value="{{ element.element_id }}"
+                      data-symbol="{{ element.symbol }}"
+                      data-name="{{ element.element_name }}">
+                {{ element.symbol }} — {{ element.element_name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Преглед на равенка</label>
+            <div class="eq-preview" id="eqPreview">A + B → ___</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Продукт (формула)</label>
+            <input type="text" class="form-control" name="product" id="product" placeholder="H2O, NaCl, CO2">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Услови</label>
+            <textarea class="form-control" name="conditions" id="conditions" rows="1" placeholder="Стандардни услови">Стандардни услови</textarea>
+            <div class="form-text">Дополнителни параметри подолу ќе се додадат автоматски.</div>
+          </div>
+
+          <div class="col-md-4">
+            <input type="text" class="form-control" name="temperature" id="temperature" placeholder="Темп. °C">
+          </div>
+          <div class="col-md-4">
+            <input type="text" class="form-control" name="pressure" id="pressure" placeholder="Притисок (atm)">
+          </div>
+          <div class="col-md-4">
+            <input type="text" class="form-control" name="catalyst" id="catalyst" placeholder="Катализатор">
+          </div>
+
+          <div class="col-12">
+            <div class="form-text">Брзи услови:</div>
+            <div>
+              <span class="chip" onclick="addCond('Собна температура')">Собна температура</span>
+              <span class="chip" onclick="addCond('Суви услови')">Суви услови</span>
+              <span class="chip" onclick="addCond('Инертна атмосфера (Ar)')">Инертна атмосфера (Ar)</span>
+              <span class="chip" onclick="addCond('Светлина')">Светлина</span>
+              <span class="chip" onclick="addCond('Без катализатор')">Без катализатор</span>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-4"/>
+
+        <h5 class="section-title"><i class="bi bi-journal-text"></i> Експеримент</h5>
+        <div class="mb-3">
+          <label class="form-label">Опис на експериментот</label>
+          <textarea class="form-control" name="experiment_result" id="experiment_result" rows="3"
+                    placeholder="Чекори, забелешки, очекуван тек..."></textarea>
+        </div>
+
+        <h5 class="section-title mt-3"><i class="bi bi-shield-exclamation"></i> Безбедност</h5>
+        <div class="mb-3">
+          <label class="form-label">Безбедносни предупредувања</label>
+          <textarea class="form-control" name="safety_warning" id="safety_warning" rows="2">Стандардни безбедносни мерки</textarea>
+        </div>
+
+        <h5 class="section-title mt-3"><i class="bi bi-tools"></i> Лабораториска опрема</h5>
+        <div class="equip-grid">
+          {% for item in equipment %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="equipment_ids" id="eq{{ item.equipment_id }}" value="{{ item.equipment_id }}">
+            <label class="form-check-label" for="eq{{ item.equipment_id }}">
+              {{ item.equipment_name }}{% if item.type %} ({{ item.type }}){% endif %}
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="alert alert-info mt-3">
+          <strong>Напомена:</strong> Со креирање на реакција, автоматски се додава и експеримент кој студентите можат да го извршуваат во виртуелната лабораторија.
+        </div>
+
+        <div class="sticky-actions d-flex justify-content-between align-items-center">
+          <a href="/reactions" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Откажи</a>
+          <button type="submit" class="btn btn-success"><i class="bi bi-plus-circle"></i> Креирај</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ДЕСНО: Помош и брз преглед -->
+  <div class="card block">
+    <div class="card-body">
+      <h6 class="section-title"><i class="bi bi-magic"></i> Брз преглед</h6>
+      <div class="eq-preview" id="eqPreviewSide">A + B → ___</div>
+
+      <hr class="my-3"/>
+      <h6 class="section-title"><i class="bi bi-lightbulb"></i> Совети</h6>
+      <ul class="small mb-0">
+        <li>Елементите мора да бидат различни.</li>
+        <li>„Темп./Притисок/Катализатор“ ќе се додадат кон <em>Услови</em> на backend (не дуплирај рачно).</li>
+        <li>Продуктот може да остане празен ако е непознат.</li>
+      </ul>
+    </div>
+  </div>
 </div>
 
 <script>
-function validateElements() {
-    const elem1 = document.getElementById('element1_id').value;
-    const elem2 = document.getElementById('element2_id').value;
-    if (elem1 && elem2 && elem1 === elem2) {
-        alert('Мора да изберете два различни елементи!');
-        document.getElementById('element2_id').value = '';
+  function getSelText(sel){ const o=sel.options[sel.selectedIndex]; return o? (o.dataset.symbol||''):''; }
+  function updateEq(){
+    const a = getSelText(document.getElementById('element1_id')) || 'A';
+    const b = getSelText(document.getElementById('element2_id')) || 'B';
+    const p = (document.getElementById('product').value||'___').trim() || '___';
+    const eq = `${a} + ${b} → ${p}`;
+    document.getElementById('eqPreview').textContent = eq;
+    document.getElementById('eqPreviewSide').textContent = eq;
+  }
+  function addCond(txt){
+    const ta = document.getElementById('conditions');
+    const val = ta.value.trim();
+    ta.value = val ? (val + '; ' + txt) : txt;
+    ta.focus();
+  }
+  function validateDiff(){
+    const e1=document.getElementById('element1_id'), e2=document.getElementById('element2_id');
+    if(e1.value && e2.value && e1.value===e2.value){
+      alert('Мора да изберете два различни елементи!');
+      e2.value=''; updateEq(); return false;
     }
-}
-document.getElementById('element1_id').addEventListener('change', validateElements);
-document.getElementById('element2_id').addEventListener('change', validateElements);
+    return true;
+  }
+  ['element1_id','element2_id','product'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', ()=>{ validateDiff(); updateEq(); });
+    document.getElementById(id).addEventListener('input',  ()=>{ updateEq(); });
+  });
+  updateEq();
 </script>
 {% endblock %}

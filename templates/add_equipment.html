@@ -2,44 +2,99 @@
 {% block title %}Додај лабораториска опрема{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3>Додај нова лабораториска опрема</h3>
-            </div>
-            <div class="card-body">
-                {% if error %}
-                    <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
-                
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Име на опремата</label>
-                        <input type="text" class="form-control" name="name" maxlength="50" required>
-                        <small class="form-text text-muted">Максимум 50 карактери</small>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="type" class="form-label">Тип на опрема</label>
-                        <input type="text" class="form-control" name="type" maxlength="50" placeholder="Стаклена опрема, Мерни инструменти...">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Опис</label>
-                        <textarea class="form-control" name="description" rows="3" placeholder="Детален опис за употребата на опремата..."></textarea>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="safety_info" class="form-label">Безбедносни информации</label>
-                        <textarea class="form-control" name="safety_info" rows="2" placeholder="Безбедносни мерки при користење..."></textarea>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-success">Додај опрема</button>
-                    <a href="/dashboard" class="btn btn-secondary">Откажи</a>
-                </form>
-            </div>
-        </div>
+<style>
+  .hero{background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;border-radius:18px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .pill{width:42px;height:42px;border-radius:12px;background:#ffffff22;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .type-badge{background:#ffffff22;color:#fff;border-radius:999px;padding:6px 12px;font-weight:600;letter-spacing:.2px}
+  .wrap{display:grid;grid-template-columns:1.35fr .85fr;gap:18px;margin-top:16px}
+  @media (max-width: 992px){.wrap{grid-template-columns:1fr}}
+  .card.block{border:0;border-radius:16px;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .section-title{font-weight:800;margin-bottom:.35rem}
+  .muted{color:#6c757d}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;margin:4px;border-radius:999px;background:#eef2ff;color:#3f51b5;font-weight:600;cursor:pointer;border:1px solid rgba(63,81,181,.25);user-select:none;font-size:.9rem}
+  .sticky-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid #eef1f4;padding:12px 0;margin-top:8px}
+</style>
+
+<div class="hero">
+  <div class="d-flex align-items-center gap-3">
+    <div class="pill"><i class="bi bi-tools"></i></div>
+    <div>
+      <h2 class="mb-0 text-truncate">Додај нова лабораториска опрема</h2>
+      <div class="small opacity-75">Име, тип, опис и безбедност</div>
     </div>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span class="type-badge">Полиња со <b>*</b> се задолжителни</span>
+    <a href="/equipment" class="btn btn-light btn-sm fw-semibold"><i class="bi bi-list"></i> Листа</a>
+  </div>
 </div>
+
+<div class="wrap">
+  <!-- Лево: форма -->
+  <div class="card block">
+    <div class="card-body">
+      <h5 class="section-title"><i class="bi bi-plus-circle"></i> Податоци за опрема</h5>
+      {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+      <form method="POST" id="equip-form" novalidate>
+        <div class="mb-3">
+          <label class="form-label">Име на опремата *</label>
+          <input type="text" class="form-control" name="name" id="eq-name" maxlength="50" required placeholder="Пипета, Термометар...">
+          <small class="form-text text-muted">Максимум 50 карактери.</small>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Тип на опрема</label>
+          <input type="text" class="form-control" name="type" id="eq-type" maxlength="50" placeholder="Стакларија, Мерење, Загревање...">
+          <div class="form-text">Брз избор:</div>
+          <div>
+            <span class="chip" onclick="pickType('Стакларија')">Стакларија</span>
+            <span class="chip" onclick="pickType('Мерење')">Мерење</span>
+            <span class="chip" onclick="pickType('Загревање')">Загревање</span>
+            <span class="chip" onclick="pickType('Безбедност')">Безбедност</span>
+            <span class="chip" onclick="pickType('Општа')">Општа</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Опис</label>
+          <textarea class="form-control" name="description" id="eq-desc" rows="4" placeholder="Краток опис, употреба, напомени..."></textarea>
+        </div>
+
+        <div class="mb-1">
+          <label class="form-label">Безбедносни информации</label>
+          <textarea class="form-control" name="safety_info" id="eq-safe" rows="3" placeholder="ППЕ, чистење, складирање..."></textarea>
+        </div>
+
+        <div class="sticky-actions d-flex justify-content-between align-items-center">
+          <a href="/equipment" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Откажи</a>
+          <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Додај опрема</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Десно: жив преглед / брзи факти -->
+  <div class="card block">
+    <div class="card-body">
+      <h6 class="section-title"><i class="bi bi-magic"></i> Жив преглед</h6>
+      <div class="mb-2"><b>Име:</b> <span id="prev-name" class="fw-semibold">—</span></div>
+      <div class="mb-2"><b>Тип:</b> <span id="prev-type" class="fw-semibold">—</span></div>
+
+      <hr class="my-3"/>
+      <h6 class="section-title"><i class="bi bi-lightbulb"></i> Совети</h6>
+      <ul class="small mb-0">
+        <li>Конзистентен тип (за филтри и извештаи).</li>
+        <li>Во опис: употреба + специфични напомени.</li>
+        <li>Безбедност: кратко и применливо (ППЕ, чистење, складирање).</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  function pickType(txt){ const t=document.getElementById('eq-type'); t.value=txt; t.focus(); document.getElementById('prev-type').textContent=txt; }
+  document.getElementById('eq-name').addEventListener('input', e=>{ document.getElementById('prev-name').textContent=e.target.value||'—'; });
+  document.getElementById('eq-type').addEventListener('input', e=>{ document.getElementById('prev-type').textContent=e.target.value||'—'; });
+</script>
 {% endblock %}

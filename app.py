@@ -44,17 +44,17 @@ def _enrich_with_equipment(exp_rows):
 # ------------------------------
 @app.route('/')
 def index():
-    return '''
-    <h1>🧪 SIMLAB - Виртуелна Хемиска Лабораторија</h1>
-    <h3>📊 SQL пристап за Бази на Податоци</h3>
-    <ul>
-        <li><a href="/users">👥 Прикажи корисници</a></li>
-        <li><a href="/elements">🔬 Прикажи хемиски елементи</a></li>
-        <li><a href="/equipment">🛠 Прикажи лабораториска опрема</a></li>
-        <li><a href="/reports">📈 SQL Извештаи</a></li>
-        <li><a href="/test-db">🔍 Тестирај база</a></li>
-    </ul>
-    '''
+    # Ако сакаш логнатите веднаш да одат на Dashboard, одкоментирај ги 3-те линии подолу
+    # if 'user_id' in session:
+    #     return redirect(url_for('dashboard'))
+
+    return render_template(
+        'home.html',
+        is_logged=('user_id' in session),
+        user_name=session.get('user_name'),
+        role=session.get('role')  # 'student' или 'teacher'
+    )
+
 
 
 @app.route('/test-db')
@@ -654,10 +654,8 @@ def reports_adv_equipment_usage():
 
 
 @app.route('/reports/adv/students_experiments_detailed')
+@require_login('teacher')
 def reports_adv_students_experiments_detailed():
-    if 'user_id' not in session or session.get('role') != 'teacher':
-        return redirect('/login')
-
     sql = """
         SELECT 
             s.student_id,
@@ -670,16 +668,11 @@ def reports_adv_students_experiments_detailed():
         JOIN userparticipatesinexperiment up ON s.student_id = up.user_id
         JOIN experiment e ON up.experiment_id = e.experiment_id
         WHERE s.teacher_id = %s
-        ORDER BY full_name, participation_time DESC
+        ORDER BY u.user_name, up.participation_timestamp DESC
     """
     rows = DatabaseManager.execute_query(sql, (session['user_id'],)) or []
-
-    # Ако сакаш брзо да провериш дали има глобални податоци без филтер по професор:
-    if not rows and request.args.get('all') == '1':
-        sql_all = sql.replace("WHERE s.teacher_id = %s", "")
-        rows = DatabaseManager.execute_query(sql_all) or []
-
     return _render_generic("Детален извештај: студенти и експерименти", rows)
+
 
 @app.route('/reports/adv/experiment_participants')
 @require_login('teacher')

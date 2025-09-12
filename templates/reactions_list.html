@@ -2,65 +2,144 @@
 {% block title %}Реакции{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>Хемиски реакции</h2>
-            {% if user_role == 'teacher' %}
-                <a href="/reactions/add" class="btn btn-success">Додај нова реакција</a>
-            {% endif %}
-        </div>
-    </div>
+<style>
+  .page-hero{background:linear-gradient(135deg,#232526,#414345);color:#fff;border-radius:18px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
+  .search-input{min-width:260px}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;margin:4px;border-radius:999px;background:#eef2ff;color:#3f51b5;font-weight:600;border:1px solid rgba(63,81,181,.25);user-select:none;font-size:.9rem;cursor:pointer}
+  .chip.active{background:#3f51b5;color:#fff}
+  .rx-card{border:0;border-radius:16px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .rx-card .card-header{background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;display:flex;justify-content:space-between;align-items:center}
+  .eq{font-weight:800;font-size:18px;background:#f8f9fa;border:1px solid #edf0f4;border-radius:12px;padding:10px 12px}
+  .empty{border:2px dashed #e9ecef;border-radius:16px;padding:24px;text-align:center;color:#6c757d}
+</style>
+
+<div class="page-hero">
+  <div>
+    <h2 class="mb-1">Хемиски реакции</h2>
+    <div class="opacity-75">Вкупно: <b>{{ reactions|length if reactions else 0 }}</b></div>
+  </div>
+  {% if user_role == 'teacher' %}
+    <a href="/reactions/add" class="btn btn-light fw-semibold"><i class="bi bi-plus-circle"></i> Додај нова</a>
+  {% endif %}
 </div>
 
-<div class="row">
-    {% for reaction in reactions %}
-    <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Реакција #{{ reaction.reaction_id }}</h5>
-                <small class="text-muted">{{ reaction.created_by }}</small>
-            </div>
-            <div class="card-body">
-                <div class="reaction-equation text-center mb-3" style="font-size: 18px; font-weight: bold; background: #f8f9fa; padding: 15px; border-radius: 10px;">
-                    {{ reaction.element1_symbol }} + {{ reaction.element2_symbol }} → {{ reaction.product }}
-                </div>
-                
-                <p><strong>Елементи:</strong> {{ reaction.element1_name }} + {{ reaction.element2_name }}</p>
-                <p><strong>Продукт:</strong> {{ reaction.product }}</p>
-                <p><strong>Услови:</strong> {{ reaction.conditions or 'Стандардни услови' }}</p>
-                
-                <div class="mt-3">
-                    {% if user_role == 'teacher' %}
-                        <a href="/reactions/{{ reaction.reaction_id }}/edit" class="btn btn-warning btn-sm">Едитирај</a>
-                        <form method="POST" action="/reactions/{{ reaction.reaction_id }}/delete" style="display: inline;" 
-                              onsubmit="return confirm('Дали сте сигурни дека сакате да ја избришете реакцијата?')">
-                            <button type="submit" class="btn btn-danger btn-sm">Избриши</button>
-                        </form>
-                    {% endif %}
-                </div>
-            </div>
+<div class="toolbar">
+  <div class="input-group search-input">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input id="search" class="form-control" placeholder="Пребарај по симбол/име/услов...">
+  </div>
+  <select id="sort" class="form-select" style="max-width:220px">
+    <option value="id_desc">Најново (ID ↓)</option>
+    <option value="id_asc">Најстаро (ID ↑)</option>
+    <option value="sym_az">Симболи (A–Z)</option>
+    <option value="prod_az">Продукт (A–Z)</option>
+  </select>
+  <div id="chips" class="ms-auto"></div>
+</div>
+
+{% if not reactions %}
+  <div class="empty">
+    <div style="font-size:36px">🧪</div>
+    <div class="mt-2">Нема дефинирани реакции.</div>
+    {% if user_role == 'teacher' %}
+      <a href="/reactions/add" class="btn btn-primary btn-sm mt-2">Додај прва реакција</a>
+    {% endif %}
+  </div>
+{% else %}
+  <div id="rx-grid" class="row">
+    {% for r in reactions %}
+    <div class="col-md-6 col-lg-4 mb-3 rx-item"
+         data-id="{{ r.reaction_id }}"
+         data-sym="{{ (r.element1_symbol ~ r.element2_symbol)|lower }}"
+         data-prod="{{ (r.product or '')|lower }}"
+         data-text="{{ (r.element1_symbol ~ ' ' ~ r.element2_symbol ~ ' ' ~ (r.product or '') ~ ' ' ~ (r.conditions or '') ~ ' ' ~ (r.element1_name or '') ~ ' ' ~ (r.element2_name or ''))|lower }}">
+      <div class="card rx-card h-100">
+        <div class="card-header">
+          <h5 class="mb-0 text-truncate">Реакција #{{ r.reaction_id }}</h5>
+          <small class="text-truncate">{{ r.created_by }}</small>
         </div>
-    </div>
-    {% else %}
-    <div class="col-12">
-        <div class="alert alert-info text-center">
-            <h4>Нема дефинирани реакции</h4>
+        <div class="card-body d-flex flex-column">
+          <div class="eq mb-3 text-center">
+            {{ r.element1_symbol }} + {{ r.element2_symbol }} → {{ r.product or '—' }}
+          </div>
+
+          <ul class="small list-unstyled mb-2">
+            <li><b>Елементи:</b> {{ r.element1_name }} + {{ r.element2_name }}</li>
+            <li><b>Продукт:</b> {{ r.product or '—' }}</li>
+            <li><b>Услови:</b> {{ r.conditions or 'Стандардни услови' }}</li>
+          </ul>
+
+          <div class="mt-auto d-flex gap-2">
             {% if user_role == 'teacher' %}
-                <p>Започнете со додавање на нови реакции за вашите студенти.</p>
-                <a href="/reactions/add" class="btn btn-primary">Додај прва реакција</a>
-            {% else %}
-                <p>Вашиот професор сè уште не додал реакции во системот.</p>
+              <a href="/reactions/{{ r.reaction_id }}/edit" class="btn btn-outline-warning btn-sm">
+                <i class="bi bi-pencil-square"></i> Едитирај
+              </a>
+              <form method="POST" action="/reactions/{{ r.reaction_id }}/delete" onsubmit="return confirm('Да ја избришам реакцијата?')">
+                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Избриши</button>
+              </form>
             {% endif %}
+          </div>
         </div>
+      </div>
     </div>
     {% endfor %}
-</div>
+  </div>
+{% endif %}
 
 <div class="mt-3">
-    <a href="/dashboard" class="btn btn-secondary">Назад до Dashboard</a>
-    {% if user_role == 'student' %}
-        <a href="/laboratory" class="btn btn-primary">Отвори лабораторија</a>
-    {% endif %}
+  <a href="/dashboard" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Назад до Dashboard</a>
+  {% if user_role == 'student' %}
+    <a href="/laboratory" class="btn btn-primary"><i class="bi bi-flask"></i> Виртуелна лабораторија</a>
+  {% endif %}
 </div>
+
+<script>
+  const items=[...document.querySelectorAll('.rx-item')];
+  const search=document.getElementById('search');
+  const sortSel=document.getElementById('sort');
+  const chipsWrap=document.getElementById('chips');
+
+  // генерирај чипови за брз филтер по прва буква на продукт
+  const PROD_LETTERS=[...new Set(items.map(i=>(i.dataset.prod||'').charAt(0)).filter(Boolean))].sort();
+  let activeLetter=null;
+  PROD_LETTERS.forEach(l=>{
+    const c=document.createElement('button');
+    c.type='button'; c.className='chip'; c.textContent=l.toUpperCase();
+    c.addEventListener('click', ()=>{
+      if(activeLetter===l){ activeLetter=null; c.classList.remove('active'); }
+      else { activeLetter=l; [...chipsWrap.children].forEach(x=>x.classList.remove('active')); c.classList.add('active'); }
+      applyFilters();
+    });
+    chipsWrap.appendChild(c);
+  });
+
+  search.addEventListener('input', applyFilters);
+  sortSel.addEventListener('change', applySort);
+
+  function applyFilters(){
+    const q=(search.value||'').toLowerCase().trim();
+    items.forEach(it=>{
+      const matchText=it.dataset.text.includes(q);
+      const matchLetter=!activeLetter || (it.dataset.prod||'').startsWith(activeLetter);
+      it.style.display=(matchText && matchLetter) ? '' : 'none';
+    });
+  }
+  function applySort(){
+    const val=sortSel.value;
+    const grid=document.getElementById('rx-grid');
+    const sorted=[...items].sort((a,b)=>{
+      const ai=+a.dataset.id, bi=+b.dataset.id;
+      const as=a.dataset.sym, bs=b.dataset.sym;
+      const ap=a.dataset.prod, bp=b.dataset.prod;
+      if(val==='id_desc') return bi-ai;
+      if(val==='id_asc')  return ai-bi;
+      if(val==='sym_az')  return as.localeCompare(bs,'mk');
+      if(val==='prod_az') return ap.localeCompare(bp,'mk');
+      return 0;
+    });
+    sorted.forEach(el=>grid.appendChild(el));
+  }
+  applySort();
+</script>
 {% endblock %}

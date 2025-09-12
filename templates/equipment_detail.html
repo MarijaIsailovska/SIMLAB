@@ -2,41 +2,134 @@
 {% block title %}{{ equipment.equipment_name }}{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between">
-                <h3>{{ equipment.equipment_name }}</h3>
-                {% if user_role == 'teacher' %}
-                    <a href="/equipment/{{ equipment.equipment_id }}/edit" class="btn btn-warning btn-sm">Едитирај</a>
-                {% endif %}
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5>Основни информации</h5>
-                        <p><strong>Тип:</strong> {{ equipment.type or 'Не е специфициран' }}</p>
-                        <p><strong>Опис:</strong></p>
-                        <p>{{ equipment.description or 'Нема достапен опис' }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h5>Безбедносни информации</h5>
-                        {% if equipment.safety_info %}
-                            <div class="alert alert-warning">
-                                {{ equipment.safety_info }}
-                            </div>
-                        {% else %}
-                            <p class="text-muted">Нема специфични безбедносни барања</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="mt-3">
-            <a href="/equipment" class="btn btn-secondary">Назад до листа</a>
-            <a href="/dashboard" class="btn btn-primary">Dashboard</a>
-        </div>
+<style>
+  .hero{
+    background: linear-gradient(135deg,#6a11cb,#2575fc);
+    color:#fff;border-radius:18px;padding:18px 22px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px
+  }
+  .type-badge{
+    background:#ffffff22;color:#fff;border-radius:999px;padding:6px 12px;
+    font-weight:600; letter-spacing:.2px
+  }
+  .wrap{display:grid;grid-template-columns:1.4fr .8fr;gap:18px;margin-top:16px}
+  @media (max-width: 992px){ .wrap{grid-template-columns:1fr} }
+  .card.block{border:0;border-radius:16px;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .section-title{font-weight:800;margin-bottom:.35rem}
+  .muted{color:#6c757d}
+  .line-clamp-6{
+    display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden
+  }
+  .fact-row .row + .row{margin-top:10px}
+  .btn-ghost{background:#00000008;border:1px solid #ffffff55;color:#fff}
+</style>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="d-flex align-items-center gap-3">
+    <div style="width:42px;height:42px;border-radius:12px;background:#ffffff22;display:flex;align-items:center;justify-content:center">
+      <i class="bi bi-tools" style="font-size:20px"></i>
     </div>
+    <div>
+      <h2 class="mb-0 text-truncate">{{ equipment.equipment_name }}</h2>
+      <div class="small opacity-75">Лабораториска опрема</div>
+    </div>
+  </div>
+
+  <div class="d-flex align-items-center gap-2">
+    <span class="type-badge" title="Тип на опрема">
+      <i class="bi bi-tag me-1"></i>{{ equipment.type or 'Не е специфициран' }}
+    </span>
+    {% if user_role == 'teacher' %}
+      <a href="/equipment/{{ equipment.equipment_id }}/edit" class="btn btn-light btn-sm fw-semibold">
+        <i class="bi bi-pencil-square"></i> Едитирај
+      </a>
+    {% endif %}
+    <button class="btn btn-ghost btn-sm" onclick="window.print()"><i class="bi bi-printer"></i></button>
+  </div>
 </div>
+
+<div class="wrap">
+  <!-- ЛЕВО -->
+  <div class="card block">
+    <div class="card-body">
+      <h5 class="section-title"><i class="bi bi-info-circle"></i> Основни информации</h5>
+      {% if equipment.description %}
+        <p class="mb-3 line-clamp-6" id="desc">{{ equipment.description }}</p>
+        <button class="btn btn-outline-secondary btn-sm" onclick="copyText('#desc')">
+          <i class="bi bi-clipboard"></i> Копирај опис
+        </button>
+      {% else %}
+        <p class="muted">Нема достапен опис.</p>
+      {% endif %}
+
+      <hr class="my-4"/>
+
+      <h5 class="section-title"><i class="bi bi-shield-exclamation"></i> Безбедносни информации</h5>
+      {% if equipment.safety_info %}
+        <div class="alert alert-warning mb-2" id="safety">{{ equipment.safety_info }}</div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-warning btn-sm" onclick="copyText('#safety')">
+            <i class="bi bi-clipboard-check"></i> Копирај безбедност
+          </button>
+          <button class="btn btn-outline-dark btn-sm" data-bs-toggle="collapse" data-bs-target="#safetyTips">
+            <i class="bi bi-chevron-down"></i> Совети
+          </button>
+        </div>
+        <div id="safetyTips" class="collapse mt-2">
+          <ul class="small mb-0">
+            <li>Провери PPE (ракавици/очила/мантила) пред употреба.</li>
+            <li>Почитувај процедури за чистење и складирање.</li>
+            <li>Пријави оштетувања и неисправности веднаш.</li>
+          </ul>
+        </div>
+      {% else %}
+        <p class="muted">Нема специфични безбедносни барања.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ДЕСНО -->
+  <div class="card block">
+    <div class="card-body fact-row">
+      <h6 class="section-title"><i class="bi bi-list-ul"></i> Брзи факти</h6>
+      <div class="row">
+        <div class="col-5 muted">Тип</div>
+        <div class="col-7 fw-semibold">{{ equipment.type or '—' }}</div>
+      </div>
+      <div class="row">
+        <div class="col-5 muted">ID</div>
+        <div class="col-7 fw-semibold">#{{ equipment.equipment_id }}</div>
+      </div>
+
+      <hr class="my-3"/>
+
+      <h6 class="section-title"><i class="bi bi-compass"></i> Навигација</h6>
+      <div class="d-grid gap-2">
+        <a href="/equipment" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-arrow-left"></i> Назад до листа
+        </a>
+        <a href="/dashboard" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a href="/laboratory" class="btn btn-outline-dark btn-sm">
+          <i class="bi bi-flask"></i> Виртуелна лабораторија
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function copyText(selector){
+    const el = document.querySelector(selector);
+    if(!el) return;
+    const text = el.innerText.trim();
+    if(!text) return;
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn = document.activeElement;
+      if(btn) { const old = btn.innerHTML; btn.innerHTML='✔ Копирано'; setTimeout(()=>btn.innerHTML=old,1200); }
+    });
+  }
+</script>
 {% endblock %}

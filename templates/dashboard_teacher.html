@@ -1,135 +1,154 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - Професор{% endblock %}
+{% block title %}Dashboard · Професор{% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-12">
-    <h2>Добредојде, {{ user_name }}!</h2>
-    <p class="lead">Професорска контролна табла</p>
+<style>
+  :root{
+    --grad-a: linear-gradient(135deg,#00b09b,#96c93d);
+    --grad-b: linear-gradient(135deg,#f7971e,#ffd200);
+    --grad-c: linear-gradient(135deg,#36d1dc,#5b86e5);
+    --grad-d: linear-gradient(135deg,#ff512f,#dd2476);
+  }
+  .hero{background:linear-gradient(135deg,#232526,#414345); color:#fff; border-radius:18px; padding:24px 28px}
+  .stat-card{border:0;border-radius:16px;color:#fff;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.12)}
+  .stat-card .card-body{padding:18px}
+  .stat-card h2{font-weight:800;margin:0}
+  .hover-lift{transition:transform .15s ease, box-shadow .15s ease}
+  .hover-lift:hover{transform:translateY(-2px); box-shadow:0 16px 34px rgba(0,0,0,.12)}
+</style>
+
+<div class="hero mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+  <div>
+    <h2 class="mb-1">Добредојде, {{ user_name }}</h2>
+    <div class="opacity-75">Професорска контролна табла · управување со содржини и следење активности</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/reactions/add" class="btn btn-light fw-semibold"> Нова реакција</a>
+    <a href="/laboratory" class="btn btn-outline-light">Лабораторија</a>
   </div>
 </div>
 
-<!-- Управување со содржина -->
-<div class="row mt-4">
-  <div class="col-md-3 mb-3">
-    <div class="card h-100">
-      <div class="card-header bg-primary text-white">
-        <h5><i class="bi bi-flask"></i> Хемиски елементи</h5>
-      </div>
+<!-- STAT cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card hover-lift" style="background:var(--grad-a)">
       <div class="card-body">
-        <p>Управување со хемиски елементи</p>
+        <div class="small opacity-75">Студенти</div>
+        <h2 class="count-up" data-target="{{ stats.student_count or 0 }}">0</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card hover-lift" style="background:var(--grad-b)">
+      <div class="card-body">
+        <div class="small opacity-75">Реакции</div>
+        <h2 class="count-up" data-target="{{ stats.reaction_count or 0 }}">0</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card hover-lift" style="background:var(--grad-c)">
+      <div class="card-body">
+        <div class="small opacity-75">Експерименти</div>
+        <h2 class="count-up" data-target="{{ stats.experiment_count or 0 }}">0</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card hover-lift" style="background:var(--grad-d)">
+      <div class="card-body">
+        <div class="small opacity-75">Активности денес</div>
+        <h2 class="count-up" data-target="{{ stats.activity_count or 0 }}">0</h2>
+      </div>
+    </div>
+  </div>
+</div>
+<br>
+<br>
+
+<!-- Управување со содржина -->
+<div class="row g-3">
+  <div class="col-lg-3">
+    <div class="card h-100 hover-lift">
+      <div class="card-header bg-primary text-white"><i class="bi bi-flask"></i> Хемиски елементи</div>
+      <div class="card-body d-grid gap-2">
         <a href="/elements" class="btn btn-outline-primary btn-sm">Прегледај</a>
         <a href="/elements/add" class="btn btn-primary btn-sm">Додај нов</a>
       </div>
     </div>
   </div>
-
-  <div class="col-md-3 mb-3">
-    <div class="card h-100">
-      <div class="card-header bg-success text-white">
-        <h5><i class="bi bi-tools"></i> Лабораториска опрема</h5>
-      </div>
-      <div class="card-body">
-        <p>Управување со опрема</p>
+  <div class="col-lg-3">
+    <div class="card h-100 hover-lift">
+      <div class="card-header bg-success text-white"><i class="bi bi-tools"></i> Лаб. опрема</div>
+      <div class="card-body d-grid gap-2">
         <a href="/equipment" class="btn btn-outline-success btn-sm">Прегледај</a>
         <a href="/equipment/add" class="btn btn-success btn-sm">Додај нова</a>
       </div>
     </div>
   </div>
-
-  <div class="col-md-3 mb-3">
-    <div class="card h-100">
-      <div class="card-header bg-warning text-dark">
-        <h5><i class="bi bi-diagram-3"></i> Реакции</h5>
-      </div>
-      <div class="card-body">
-        <p>Креирање на реакции</p>
+  <div class="col-lg-3">
+    <div class="card h-100 hover-lift">
+      <div class="card-header bg-warning text-dark"><i class="bi bi-diagram-3"></i> Реакции</div>
+      <div class="card-body d-grid gap-2">
         <a href="/reactions" class="btn btn-outline-warning btn-sm">Прегледај</a>
         <a href="/reactions/add" class="btn btn-warning btn-sm">Додај нова</a>
       </div>
     </div>
   </div>
-
-  <div class="col-md-3 mb-3">
-    <div class="card h-100">
-      <div class="card-header bg-danger text-white">
-        <h5><i class="bi bi-radioactive"></i> Лабораторија</h5>
-      </div>
+  <div class="col-lg-3">
+    <div class="card h-100 hover-lift">
+      <div class="card-header bg-danger text-white"><i class="bi bi-radioactive"></i> Лабораторија</div>
       <div class="card-body">
-        <p>Тестирај реакции</p>
-        <a href="/laboratory" class="btn btn-danger">Отвори</a>
+        <p>Тестирај комбинации и услови.</p>
+        <a href="/laboratory" class="btn btn-danger w-100">Отвори</a>
+      </div>
+    </div>
+  </div>
+</div>
+<br>
+<br>
+
+<!-- Извештаи и студенти -->
+<div class="row g-3 mt-1">
+  <div class="col-lg-4">
+    <div class="card h-100 hover-lift">
+      <div class="card-header text-white" style="background:linear-gradient(135deg,#FF6B6B,#4ECDC4)"><i class="bi bi-journal-check"></i> Експерименти</div>
+      <div class="card-body d-grid gap-2">
+        <a href="/experiments" class="btn btn-outline-info btn-sm">Сите експерименти</a>
+        <a href="/reports/detailed_experiments" class="btn btn-outline-info btn-sm">Експерименти на студенти</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100 hover-lift">
+      <div class="card-header bg-info text-white"><i class="bi bi-people"></i> Студенти</div>
+      <div class="card-body d-grid gap-2">
+        <a href="/my_students" class="btn btn-info">Мои студенти</a>
+        <a href="/reports/low_activity_students" class="btn btn-outline-dark">Ниска активност</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100 hover-lift">
+      <div class="card-header bg-secondary text-white"><i class="bi bi-file-earmark-bar-graph"></i> Извештаи</div>
+      <div class="card-body d-grid gap-2">
+        <a href="/reports" class="btn btn-secondary">Мени за извештаи</a>
+        <a href="/reports/element_views" class="btn btn-outline-secondary">Прегледи на елементи</a>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Експерименти и студенти -->
-<div class="row">
-  <div class="col-md-4 mb-3">
-    <div class="card h-100">
-      <div class="card-header text-white" style="background: linear-gradient(45deg, #FF6B6B, #4ECDC4);">
-        <h5><i class="bi bi-journal-check"></i> Експерименти</h5>
-      </div>
-      <div class="card-body">
-        <p>Преглед на експерименти</p>
-        <a href="/experiments" class="btn btn-outline-info btn-sm">Сите</a>
-        <a href="/my-experiments" class="btn btn-info btn-sm">Мои</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-4 mb-3">
-    <div class="card h-100">
-      <div class="card-header bg-info text-white">
-        <h5><i class="bi bi-people"></i> Студенти</h5>
-      </div>
-      <div class="card-body">
-        <p>Следете го напредокот на студентите</p>
-        <a href="/my_students" class="btn btn-info">Види студенти</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-4 mb-3">
-    <div class="card h-100">
-      <div class="card-header bg-secondary text-white">
-        <h5><i class="bi bi-file-earmark-bar-graph"></i> Извештаи</h5>
-      </div>
-      <div class="card-body">
-        <p>Детални статистики</p>
-        <a href="/reports" class="btn btn-secondary">Види извештаи</a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Брзи акции -->
-<div class="row mt-4">
-  <div class="col-12">
-    <div class="card">
-      <div class="card-header bg-dark text-white">
-        <h5><i class="bi bi-lightning"></i> Брзи акции</h5>
-      </div>
-      <div class="card-body">
-        <div class="btn-group" role="group">
-          <a href="/reactions/add" class="btn btn-outline-primary">
-            <i class="bi bi-plus-circle"></i> Нова реакција
-          </a>
-          <a href="/elements/add" class="btn btn-outline-success">
-            <i class="bi bi-plus-circle"></i> Нов елемент
-          </a>
-          <a href="/equipment/add" class="btn btn-outline-warning">
-            <i class="bi bi-plus-circle"></i> Нова опрема
-          </a>
-          <a href="/reports/detailed_experiments" class="btn btn-outline-info">
-            <i class="bi bi-graph-up"></i> Експерименти на студенти
-          </a>
-          <a href="/reports/low_activity_students" class="btn btn-outline-danger">
-            <i class="bi bi-exclamation-triangle"></i> Неактивни студенти
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<script>
+document.querySelectorAll('.count-up').forEach(el=>{
+  const target = Number(el.dataset.target||0);
+  const dur = 600; const start = performance.now();
+  const step = t=>{
+    const p = Math.min(1,(t-start)/dur);
+    el.textContent = Math.round(target * p);
+    if(p<1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+});
+</script>
 {% endblock %}

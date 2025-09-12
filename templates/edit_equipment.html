@@ -2,43 +2,109 @@
 {% block title %}Едитирај опрема{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3>Едитирај лабораториска опрема</h3>
-            </div>
-            <div class="card-body">
-                {% if error %}
-                    <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
-                
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Име на опремата</label>
-                        <input type="text" class="form-control" name="name" maxlength="50" value="{{ equipment.equipment_name }}" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="type" class="form-label">Тип на опрема</label>
-                        <input type="text" class="form-control" name="type" maxlength="50" value="{{ equipment.type or '' }}">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Опис</label>
-                        <textarea class="form-control" name="description" rows="3">{{ equipment.description or '' }}</textarea>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="safety_info" class="form-label">Безбедносни информации</label>
-                        <textarea class="form-control" name="safety_info" rows="2">{{ equipment.safety_info or '' }}</textarea>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-success">Ажурирај опрема</button>
-                    <a href="/equipment" class="btn btn-secondary">Откажи</a>
-                </form>
-            </div>
-        </div>
+<style>
+  .hero{background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;border-radius:18px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .pill{width:42px;height:42px;border-radius:12px;background:#ffffff22;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .type-badge{background:#ffffff22;color:#fff;border-radius:999px;padding:6px 12px;font-weight:600;letter-spacing:.2px}
+  .wrap{display:grid;grid-template-columns:1.35fr .85fr;gap:18px;margin-top:16px}
+  @media (max-width: 992px){.wrap{grid-template-columns:1fr}}
+  .card.block{border:0;border-radius:16px;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .section-title{font-weight:800;margin-bottom:.35rem}
+  .muted{color:#6c757d}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;margin:4px;border-radius:999px;background:#eef2ff;color:#3f51b5;font-weight:600;cursor:pointer;border:1px solid rgba(63,81,181,.25);user-select:none;font-size:.9rem}
+  .sticky-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid #eef1f4;padding:12px 0;margin-top:8px}
+</style>
+
+<div class="hero">
+  <div class="d-flex align-items-center gap-3">
+    <div class="pill"><i class="bi bi-tools"></i></div>
+    <div>
+      <h2 class="mb-0 text-truncate">Едитирај: {{ equipment.equipment_name }}</h2>
+      <div class="small opacity-75">Лабораториска опрема • ID #{{ equipment.equipment_id }}</div>
     </div>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span class="type-badge"><i class="bi bi-tag me-1"></i>{{ equipment.type or 'Не е специфициран' }}</span>
+    <a href="/equipment/{{ equipment.equipment_id }}" class="btn btn-light btn-sm fw-semibold"><i class="bi bi-eye"></i> Преглед</a>
+  </div>
 </div>
+
+<div class="wrap">
+  <!-- Лево: форма -->
+  <div class="card block">
+    <div class="card-body">
+      <h5 class="section-title"><i class="bi bi-pencil-square"></i> Податоци за опрема</h5>
+      {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+      <form method="POST" id="equip-form" novalidate>
+        <div class="mb-3">
+          <label class="form-label">Име на опремата</label>
+          <input type="text" class="form-control" name="name" maxlength="50" value="{{ equipment.equipment_name }}" required placeholder="Пипета, Термометар...">
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Тип на опрема</label>
+          <input type="text" class="form-control" name="type" maxlength="50" value="{{ equipment.type or '' }}" placeholder="Стакларија, Мерење, Загревање...">
+          <div class="form-text">Брз избор:</div>
+          <div>
+            <span class="chip" onclick="pickType('Стакларија')">Стакларија</span>
+            <span class="chip" onclick="pickType('Мерење')">Мерење</span>
+            <span class="chip" onclick="pickType('Загревање')">Загревање</span>
+            <span class="chip" onclick="pickType('Безбедност')">Безбедност</span>
+            <span class="chip" onclick="pickType('Општа')">Општа</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Опис</label>
+          <textarea class="form-control" name="description" rows="4" placeholder="Краток опис, употреба, напомени...">{{ equipment.description or '' }}</textarea>
+        </div>
+
+        <div class="mb-1">
+          <label class="form-label">Безбедносни информации</label>
+          <textarea class="form-control" name="safety_info" rows="3" placeholder="ППЕ, чистење, складирање...">{{ equipment.safety_info or '' }}</textarea>
+        </div>
+
+        <div class="sticky-actions d-flex justify-content-between align-items-center">
+          <a href="/equipment" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Откажи</a>
+          <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Ажурирај опрема</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Десно: брзи факти / помош -->
+  <div class="card block">
+    <div class="card-body">
+      <h6 class="section-title"><i class="bi bi-list-ul"></i> Брзи факти</h6>
+      <div class="row">
+        <div class="col-5 muted">Име</div>
+        <div class="col-7 fw-semibold" id="prev-name">{{ equipment.equipment_name }}</div>
+      </div>
+      <div class="row">
+        <div class="col-5 muted">Тип</div>
+        <div class="col-7 fw-semibold" id="prev-type">{{ equipment.type or '—' }}</div>
+      </div>
+      <div class="row">
+        <div class="col-5 muted">ID</div>
+        <div class="col-7 fw-semibold">#{{ equipment.equipment_id }}</div>
+      </div>
+
+      <hr class="my-3"/>
+
+      <h6 class="section-title"><i class="bi bi-lightbulb"></i> Совети</h6>
+      <ul class="small mb-0">
+        <li>Типот држи го конзистентно за полесни филтри и извештаи.</li>
+        <li>Во опис: употреба + специфични напомени.</li>
+        <li>Безбедност: кратко, јасно и применливо.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  function pickType(txt){ const t=document.querySelector('input[name="type"]'); t.value=txt; t.focus(); document.getElementById('prev-type').textContent=txt; }
+  document.querySelector('input[name="name"]').addEventListener('input', e=>{ document.getElementById('prev-name').textContent=e.target.value||'—'; });
+  document.querySelector('input[name="type"]').addEventListener('input', e=>{ document.getElementById('prev-type').textContent=e.target.value||'—'; });
+</script>
 {% endblock %}

@@ -2,63 +2,121 @@
 {% block title %}Едитирај реакција{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3>Едитирај реакција #{{ reaction.reaction_id }}</h3>
-            </div>
-            <div class="card-body">
-                {% if error %}
-                    <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
-                
-                <form method="POST">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="element1_id" class="form-label">Првин елемент</label>
-                                <select class="form-select" name="element1_id" required>
-                                    {% for element in elements %}
-                                    <option value="{{ element.element_id }}" 
-                                            {% if element.element_id == reaction.element1_id %}selected{% endif %}>
-                                        {{ element.symbol }} - {{ element.element_name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="element2_id" class="form-label">Втор елемент</label>
-                                <select class="form-select" name="element2_id" required>
-                                    {% for element in elements %}
-                                    <option value="{{ element.element_id }}" 
-                                            {% if element.element_id == reaction.element2_id %}selected{% endif %}>
-                                        {{ element.symbol }} - {{ element.element_name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="product" class="form-label">Продукт на реакцијата</label>
-                        <input type="text" class="form-control" name="product" maxlength="50" 
-                               value="{{ reaction.product }}" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="conditions" class="form-label">Услови за реакцијата</label>
-                        <textarea class="form-control" name="conditions" rows="3">{{ reaction.conditions or '' }}</textarea>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-success">Ажурирај реакција</button>
-                    <a href="/reactions" class="btn btn-secondary">Откажи</a>
-                </form>
-            </div>
-        </div>
+<style>
+  .hero{background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;border-radius:18px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .pill{width:48px;height:48px;border-radius:12px;background:#ffffff22;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .wrap{display:grid;grid-template-columns:1fr .7fr;gap:18px;margin-top:16px}
+  @media (max-width: 992px){.wrap{grid-template-columns:1fr}}
+  .card.block{border:0;border-radius:16px;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .section-title{font-weight:800;margin-bottom:.35rem}
+  .eq-preview{font-weight:800;font-size:18px;background:#f8f9fa;border:1px solid #edf0f4;border-radius:12px;padding:10px 12px}
+  .sticky-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid #eef1f4;padding:12px 0;margin-top:8px}
+</style>
+
+<div class="hero">
+  <div class="d-flex align-items-center gap-3">
+    <div class="pill"><i class="bi bi-pencil-square"></i></div>
+    <div>
+      <h2 class="mb-0">Едитирај реакција #{{ reaction.reaction_id }}</h2>
+      <div class="small opacity-75">Ажурирај реактанти, продукт и услови</div>
     </div>
+  </div>
+  <a href="/reactions" class="btn btn-light btn-sm fw-semibold"><i class="bi bi-list"></i> Сите реакции</a>
 </div>
+
+<div class="wrap">
+  <div class="card block">
+    <div class="card-body">
+      {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+      <form method="POST" id="edit-reaction-form" novalidate>
+        <h5 class="section-title"><i class="bi bi-flask"></i> Реактанти</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Прв елемент</label>
+            <select class="form-select" name="element1_id" id="element1_id" required>
+              {% for element in elements %}
+              <option value="{{ element.element_id }}"
+                      data-symbol="{{ element.symbol }}"
+                      {% if element.element_id == reaction.element1_id %}selected{% endif %}>
+                {{ element.symbol }} — {{ element.element_name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Втор елемент</label>
+            <select class="form-select" name="element2_id" id="element2_id" required>
+              {% for element in elements %}
+              <option value="{{ element.element_id }}"
+                      data-symbol="{{ element.symbol }}"
+                      {% if element.element_id == reaction.element2_id %}selected{% endif %}>
+                {{ element.symbol }} — {{ element.element_name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Преглед на равенка</label>
+            <div class="eq-preview" id="eqPreview">—</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Продукт *</label>
+            <input type="text" class="form-control" name="product" id="product"
+                   value="{{ reaction.product }}" maxlength="50" required>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Услови</label>
+            <textarea class="form-control" name="conditions" id="conditions" rows="3">{{ reaction.conditions or '' }}</textarea>
+          </div>
+        </div>
+
+        <div class="sticky-actions d-flex justify-content-between align-items-center">
+          <a href="/reactions" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Откажи</a>
+          <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Ажурирај реакција</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card block">
+    <div class="card-body">
+      <h6 class="section-title"><i class="bi bi-lightbulb"></i> Совети</h6>
+      <ul class="small mb-0">
+        <li>Елементите мора да бидат различни.</li>
+        <li>Не внесувај „Темп./Притисок/Катализатор“ ако веќе се системски додадени во описот.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  function getSym(id){
+    const sel=document.getElementById(id);
+    const opt=sel.options[sel.selectedIndex];
+    return opt ? (opt.dataset.symbol||'') : '';
+  }
+  function updateEq(){
+    const a=getSym('element1_id')||'A';
+    const b=getSym('element2_id')||'B';
+    const p=(document.getElementById('product').value||'___').trim()||'___';
+    document.getElementById('eqPreview').textContent = `${a} + ${b} → ${p}`;
+  }
+  function validateDiff(){
+    const e1=document.getElementById('element1_id'), e2=document.getElementById('element2_id');
+    if(e1.value && e2.value && e1.value===e2.value){
+      alert('Мора да изберете два различни елементи!');
+      e2.value=''; updateEq(); return false;
+    }
+    return true;
+  }
+  ['element1_id','element2_id','product'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', ()=>{ validateDiff(); updateEq(); });
+    document.getElementById(id).addEventListener('input',  updateEq);
+  });
+  updateEq();
+</script>
 {% endblock %}

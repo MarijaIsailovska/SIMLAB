@@ -75,7 +75,7 @@
     <div class="col-md-4">
         <div class="card text-center">
             <div class="card-body">
-                {% set total_views = students|sum(attribute='total_elements_viewed') %}
+                {% set total_views = students|sum(attribute='total_elements_viewed')+ students|sum(attribute='total_lab_equipment_viewed') %}
                 <h5 class="card-title">{{ total_views }}</h5>
                 <p class="card-text">Вкупно прегледи</p>
             </div>

@@ -2,78 +2,150 @@
 {% block title %}Едитирај елемент{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3>Едитирај хемиски елемент</h3>
-            </div>
-            <div class="card-body">
-                {% if error %}
-                    <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
-                
-                <form method="POST">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="symbol" class="form-label">Симбол</label>
-                                <input type="text" class="form-control" name="symbol" maxlength="2" value="{{ element.symbol }}" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Име на елемент</label>
-                                <input type="text" class="form-control" name="name" value="{{ element.element_name }}" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="atomic_number" class="form-label">Атомски број</label>
-                                <input type="number" class="form-control" name="atomic_number" value="{{ element.atomic_number }}" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="atomic_weight" class="form-label">Атомска маса</label>
-                                <input type="number" step="0.001" class="form-control" name="atomic_weight" value="{{ element.atomic_weight }}" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="melting_point" class="form-label">Точка на топење (°C)</label>
-                                <input type="number" step="0.1" class="form-control" name="melting_point" value="{{ element.melting_point or '' }}">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="boiling_point" class="form-label">Точка на вриење (°C)</label>
-                                <input type="number" step="0.1" class="form-control" name="boiling_point" value="{{ element.boiling_point or '' }}">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="hazard_type" class="form-label">Тип на опасност</label>
-                        <input type="text" class="form-control" name="hazard_type" maxlength="50" value="{{ element.hazard_type or '' }}">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Опис</label>
-                        <textarea class="form-control" name="description" rows="3">{{ element.description_element or '' }}</textarea>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-success">Ажурирај елемент</button>
-                    <a href="/elements" class="btn btn-secondary">Откажи</a>
-                </form>
-            </div>
-        </div>
+<style>
+  .hero{background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;border-radius:18px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .pill{width:54px;height:54px;border-radius:14px;background:#ffffff22;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px}
+  .type-badge{background:#ffffff22;color:#fff;border-radius:999px;padding:6px 12px;font-weight:600;letter-spacing:.2px}
+  .wrap{display:grid;grid-template-columns:1.35fr .85fr;gap:18px;margin-top:16px}
+  @media (max-width: 992px){.wrap{grid-template-columns:1fr}}
+  .card.block{border:0;border-radius:16px;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .section-title{font-weight:800;margin-bottom:.35rem}
+  .muted{color:#6c757d}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;margin:4px;border-radius:999px;background:#eef2ff;color:#3f51b5;font-weight:600;cursor:pointer;border:1px solid rgba(63,81,181,.25);user-select:none;font-size:.9rem}
+  .sticky-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid #eef1f4;padding:12px 0;margin-top:8px}
+</style>
+
+<div class="hero">
+  <div class="d-flex align-items-center gap-3">
+    <div class="pill" id="sym-pill">{{ element.symbol }}</div>
+    <div>
+      <h2 class="mb-0 text-truncate">Едитирај: {{ element.element_name }}</h2>
+      <div class="small opacity-75">Хемиски елемент • ID #{{ element.element_id }}</div>
     </div>
+  </div>
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <span class="type-badge">№ {{ element.atomic_number }}</span>
+    <span class="type-badge">
+      {{ "%.2f"|format(element.atomic_weight) if element.atomic_weight is not none else "—" }} u
+    </span>
+    <a href="/elements/{{ element.element_id }}" class="btn btn-light btn-sm fw-semibold">
+      <i class="bi bi-eye"></i> Преглед
+    </a>
+  </div>
 </div>
+
+<div class="wrap">
+  <!-- Лево: форма -->
+  <div class="card block">
+    <div class="card-body">
+      <h5 class="section-title"><i class="bi bi-pencil-square"></i> Податоци за елемент</h5>
+      {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+      <form method="POST" id="element-form" novalidate>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Симбол</label>
+            <input type="text" class="form-control" name="symbol" id="symbol"
+                   value="{{ element.symbol }}" maxlength="3" required pattern="^[A-Za-z]{1,3}$"
+                   placeholder="Na, Cl, Al...">
+            <div class="form-text">1–3 букви, авто-големи.</div>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Име на елемент</label>
+            <input type="text" class="form-control" name="name" value="{{ element.element_name }}" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Атомски број</label>
+            <input type="number" class="form-control" name="atomic_number" value="{{ element.atomic_number }}" min="1" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Атомска маса</label>
+            <div class="input-group">
+              <input type="number" step="0.0001" class="form-control" name="atomic_weight" value="{{ element.atomic_weight }}" required>
+              <span class="input-group-text">u</span>
+            </div>
+          </div>
+          <div class="col-md-4"></div>
+
+          <div class="col-md-6">
+            <label class="form-label">Точка на топење (°C)</label>
+            <input type="number" step="0.1" class="form-control" name="melting_point" value="{{ element.melting_point or '' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Точка на вриење (°C)</label>
+            <input type="number" step="0.1" class="form-control" name="boiling_point" value="{{ element.boiling_point or '' }}">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Тип на опасност</label>
+            <input type="text" class="form-control" name="hazard_type" id="hazard" maxlength="50" value="{{ element.hazard_type or '' }}">
+            <div class="form-text">Брз избор:</div>
+            <div>
+              <span class="chip" onclick="pickHazard('Нема опасност')">✔ Нема опасност</span>
+              <span class="chip" onclick="pickHazard('Корозивно')">⚠ Корозивно</span>
+              <span class="chip" onclick="pickHazard('Токсично')">☠ Токсично</span>
+              <span class="chip" onclick="pickHazard('Запалливо')">🔥 Запалливо</span>
+              <span class="chip" onclick="pickHazard('Иритант')">❗ Иритант</span>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Опис</label>
+            <textarea class="form-control" name="description" rows="4" placeholder="Краток опис...">{{ element.description_element or '' }}</textarea>
+          </div>
+        </div>
+
+        <div class="sticky-actions d-flex justify-content-between align-items-center">
+          <a href="/elements" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Откажи</a>
+          <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Ажурирај елемент</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Десно: жив преглед -->
+  <div class="card block">
+    <div class="card-body">
+      <h6 class="section-title"><i class="bi bi-magic"></i> Жив преглед</h6>
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="pill" id="preview-pill">{{ element.symbol }}</div>
+        <div>
+          <div class="fw-bold" id="preview-name">{{ element.element_name }}</div>
+          <div class="small muted">№ <span id="preview-atomic">{{ element.atomic_number }}</span> •
+            <span id="preview-weight">{{ element.atomic_weight }}</span> u
+          </div>
+        </div>
+      </div>
+      <hr class="my-3"/>
+      <h6 class="section-title"><i class="bi bi-lightbulb"></i> Совет</h6>
+      <ul class="small mb-0">
+        <li>Симбол: 1–3 букви (Na, Cl, Al).</li>
+        <li>Атомска маса со децимали (на пр. 22.9898).</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  const sym = document.getElementById('symbol');
+  const nameEl = document.querySelector('input[name="name"]');
+  const numEl = document.querySelector('input[name="atomic_number"]');
+  const wEl = document.querySelector('input[name="atomic_weight"]');
+
+  function updatePreview(){
+    const s = sym.value || '—';
+    document.getElementById('sym-pill').textContent = s;
+    document.getElementById('preview-pill').textContent = s;
+    document.getElementById('preview-name').textContent = nameEl.value || 'Име на елемент';
+    document.getElementById('preview-atomic').textContent = numEl.value || '—';
+    document.getElementById('preview-weight').textContent = wEl.value || '—';
+  }
+  function pickHazard(txt){ const hz=document.getElementById('hazard'); hz.value=txt; hz.focus(); }
+  sym.addEventListener('input', ()=>{ sym.value = sym.value.toUpperCase(); updatePreview(); });
+  nameEl.addEventListener('input', updatePreview);
+  numEl.addEventListener('input', updatePreview);
+  wEl.addEventListener('input', updatePreview);
+  updatePreview();
+</script>
 {% endblock %}

@@ -2,51 +2,179 @@
 {% block title %}Лабораториска опрема{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>Лабораториска опрема</h2>
-            {% if user_role == 'teacher' %}
-                <a href="/equipment/add" class="btn btn-success">Додај нова опрема</a>
-            {% endif %}
-        </div>
-    </div>
+<style>
+  .page-hero{
+    background: linear-gradient(135deg,#232526,#414345);
+    color:#fff;border-radius:18px;padding:18px 22px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px
+  }
+  .toolbar{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0
+  }
+  .search-input{min-width:260px}
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;padding:6px 12px;margin:4px;
+    border-radius:999px;background:#eef2ff;color:#3f51b5;font-weight:600;cursor:pointer;
+    border:1px solid rgba(63,81,181,.25); user-select:none
+  }
+  .chip.active{background:#3f51b5;color:#fff}
+  .equip-card{border:0;border-radius:16px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .equip-card .card-header{
+    background:linear-gradient(135deg,#6a11cb,#2575fc);
+    color:#fff;display:flex;justify-content:space-between;align-items:center
+  }
+  .type-badge{
+    background:#ffffff22;color:#fff;border-radius:999px;padding:2px 10px;font-size:.8rem
+  }
+  .line-clamp-3{
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden
+  }
+  .empty{
+    border:2px dashed #e9ecef;border-radius:16px;padding:24px;text-align:center;color:#6c757d
+  }
+</style>
+
+<div class="page-hero">
+  <div>
+    <h2 class="mb-1">Лабораториска опрема</h2>
+    <div class="opacity-75">Вкупно: <b>{{ equipment|length if equipment else 0 }}</b> записи</div>
+  </div>
+  {% if user_role == 'teacher' %}
+    <a href="/equipment/add" class="btn btn-light fw-semibold"><i class="bi bi-plus-circle"></i> Додај нова опрема</a>
+  {% endif %}
 </div>
 
-{% if error %}
-    <div class="alert alert-warning">{{ error }}</div>
+<div class="toolbar">
+  <div class="input-group search-input">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input id="search" class="form-control" placeholder="Пребарај по име/тип/опис...">
+  </div>
+  <select id="sort" class="form-select" style="max-width:220px">
+    <option value="name_az">Сортирај: Име (A–Z)</option>
+    <option value="name_za">Име (Z–A)</option>
+    <option value="type_az">Тип (A–Z)</option>
+    <option value="newest">Најново (ID ↓)</option>
+    <option value="oldest">Најстаро (ID ↑)</option>
+  </select>
+  <div id="type-chips" class="ms-auto"></div>
+</div>
+
+{% if not equipment %}
+  <div class="empty">
+    <div style="font-size:36px">🧰</div>
+    <div class="mt-2">Нема внесена опрема.</div>
+    {% if user_role == 'teacher' %}
+      <a href="/equipment/add" class="btn btn-primary btn-sm mt-2">Додај прва ставка</a>
+    {% endif %}
+  </div>
 {% else %}
-    <div class="row">
-        {% for item in equipment %}
-        <div class="col-md-6 col-lg-4 mb-3">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between">
-                    <h5 class="mb-0">{{ item.equipment_name }}</h5>
-                    <small class="text-muted">{{ item.type }}</small>
-                </div>
-                <div class="card-body">
-                    <p class="card-text">{{ item.description }}</p>
-                    
-                    {% if item.safety_info %}
-                        <div class="alert alert-warning alert-sm p-2">
-                            <strong>Безбедност:</strong> {{ item.safety_info }}
-                        </div>
-                    {% endif %}
-                    
-                    <div class="mt-2">
-                        <a href="/equipment/{{ item.equipment_id }}" class="btn btn-info btn-sm">Детали</a>
-                        {% if user_role == 'teacher' %}
-                            <a href="/equipment/{{ item.equipment_id }}/edit" class="btn btn-warning btn-sm">Едитирај</a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
+  <div id="equip-grid" class="row">
+    {% for item in equipment %}
+    <div class="col-md-6 col-lg-4 mb-3 equip-item"
+         data-id="{{ item.equipment_id }}"
+         data-name="{{ item.equipment_name|lower }}"
+         data-type="{{ (item.type or '')|lower }}"
+         data-text="{{ (item.equipment_name ~ ' ' ~ (item.type or '') ~ ' ' ~ (item.description or ''))|lower }}">
+      <div class="card equip-card h-100">
+        <div class="card-header">
+          <h5 class="mb-0 text-truncate"><i class="bi bi-tools me-1"></i>{{ item.equipment_name }}</h5>
+          <span class="type-badge text-truncate" title="Тип">{{ item.type or '—' }}</span>
         </div>
-        {% endfor %}
+        <div class="card-body d-flex flex-column">
+          {% if item.description %}
+          <p class="card-text line-clamp-3">{{ item.description }}</p>
+          {% else %}
+          <p class="text-muted">Нема опис.</p>
+          {% endif %}
+
+          {% if item.safety_info %}
+          <div class="alert alert-warning py-2 px-3 mt-auto">
+            <strong><i class="bi bi-shield-exclamation"></i> Безбедност:</strong>
+            <span class="d-block mt-1">{{ item.safety_info }}</span>
+          </div>
+          {% endif %}
+
+          <div class="mt-3 d-flex gap-2">
+            <a href="/equipment/{{ item.equipment_id }}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-eye"></i> Детали
+            </a>
+            {% if user_role == 'teacher' %}
+            <a href="/equipment/{{ item.equipment_id }}/edit" class="btn btn-outline-warning btn-sm">
+              <i class="bi bi-pencil-square"></i> Едитирај
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
     </div>
+    {% endfor %}
+  </div>
 {% endif %}
 
 <div class="mt-3">
-    <a href="/dashboard" class="btn btn-secondary">Назад до Dashboard</a>
+  <a href="/dashboard" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Назад до Dashboard</a>
 </div>
+
+<script>
+  // Клиентски филтер/сортирање/чипови – без бекенд промени
+  const items = [...document.querySelectorAll('.equip-item')];
+  const search = document.getElementById('search');
+  const sortSel = document.getElementById('sort');
+  const chipsWrap = document.getElementById('type-chips');
+
+  // 1) генерирај филтер по тип (чипови)
+  const TYPES = [...new Set(items.map(i => i.dataset.type).filter(Boolean))].sort();
+  let activeType = null;
+  TYPES.forEach(t=>{
+    const chip = document.createElement('button');
+    chip.type='button';
+    chip.className='chip';
+    chip.textContent = t || '—';
+    chip.addEventListener('click', ()=>{
+      if(activeType===t){ activeType=null; chip.classList.remove('active'); }
+      else{
+        activeType=t;
+        [...chipsWrap.children].forEach(c=>c.classList.remove('active'));
+        chip.classList.add('active');
+      }
+      applyFilters();
+    });
+    chipsWrap.appendChild(chip);
+  });
+
+  // 2) пребарување
+  search.addEventListener('input', applyFilters);
+
+  // 3) сортирање
+  sortSel.addEventListener('change', applySort);
+  function applySort(){
+    const val = sortSel.value;
+    const grid = document.getElementById('equip-grid');
+    const sorted = [...items].sort((a,b)=>{
+      const an=a.dataset.name, bn=b.dataset.name;
+      const at=a.dataset.type, bt=b.dataset.type;
+      const ai=+a.dataset.id, bi=+b.dataset.id;
+      if(val==='name_az')   return an.localeCompare(bn,'mk');
+      if(val==='name_za')   return bn.localeCompare(an,'mk');
+      if(val==='type_az'){  const c=at.localeCompare(bt,'mk'); return c||an.localeCompare(bn,'mk'); }
+      if(val==='newest')    return bi-ai;
+      if(val==='oldest')    return ai-bi;
+      return 0;
+    });
+    sorted.forEach(el=>grid.appendChild(el));
+  }
+
+  // 4) комбиниран филтер
+  function applyFilters(){
+    const q = (search.value||'').toLowerCase().trim();
+    items.forEach(it=>{
+      const matchText = it.dataset.text.includes(q);
+      const matchType = !activeType || it.dataset.type===activeType;
+      it.style.display = (matchText && matchType) ? '' : 'none';
+    });
+  }
+
+  // иницијално сортирај (A–Z)
+  applySort();
+</script>
 {% endblock %}

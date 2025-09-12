@@ -2,156 +2,191 @@
 {% block title %}Мои експерименти{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h2>📊 Мои експерименти</h2>
-        <p class="text-muted">
-            <strong>{{ user_name }}</strong> |
-            <span class="badge bg-{{ 'primary' if user_role == 'teacher' else 'success' }}">
-                {{ 'Професор' if user_role == 'teacher' else 'Студент' }}
-            </span>
-        </p>
-    </div>
+<style>
+  .hero{background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;border-radius:18px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .role-badge{background:#ffffff22;color:#fff;border-radius:999px;padding:6px 12px;font-weight:700}
+  .stat-card{border:0;border-radius:16px;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
+  .search-input{min-width:260px}
+  .exp-card{border:0;border-radius:16px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .exp-card .card-header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+  .eq{font-weight:800;font-size:18px;background:#f8f9fa;border:1px solid #edf0f4;border-radius:12px;padding:10px 12px}
+  .empty{border:2px dashed #e9ecef;border-radius:16px;padding:24px;text-align:center;color:#6c757d}
+</style>
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <h2 class="mb-0">📊 Мои експерименти</h2>
+    <div class="small opacity-75">{{ user_name }}</div>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span class="role-badge"><i class="bi bi-person-badge"></i> {{ 'Професор' if user_role=='teacher' else 'Студент' }}</span>
+    <a href="/dashboard" class="btn btn-light btn-sm"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="/laboratory" class="btn btn-outline-light btn-sm"><i class="bi bi-flask"></i> Нов експеримент</a>
+  </div>
 </div>
 
-{% if experiments %}
-<!-- Статистики -->
-<div class="row mt-3">
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3 class="text-success">{{ experiments|map(attribute='product')|unique|list|length }}</h3>
-                <p class="text-muted mb-0">Различни продукти</p>
-            </div>
+{% if not experiments %}
+  <div class="empty mt-3">
+    📚 Немате извршено експерименти.
+    <div class="mt-2"><a href="/laboratory" class="btn btn-primary btn-sm">🔬 Отвори лабораторија</a></div>
+  </div>
+{% else %}
+
+  <!-- Mini-статистики -->
+  <div class="row mt-3">
+    <div class="col-md-4 mb-3">
+      <div class="card stat-card text-center">
+        <div class="card-body">
+          <h3 class="text-success">{{ experiments|map(attribute='product')|unique|list|length }}</h3>
+          <div class="text-muted mb-0">Различни продукти</div>
         </div>
+      </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3 class="text-warning">{{ experiments|selectattr('safety_warning')|list|length }}</h3>
-                <p class="text-muted mb-0">Со предупредувања</p>
-            </div>
+    <div class="col-md-4 mb-3">
+      <div class="card stat-card text-center">
+        <div class="card-body">
+          <h3 class="text-warning">{{ experiments|selectattr('safety_warning')|list|length }}</h3>
+          <div class="text-muted mb-0">Со предупредувања</div>
         </div>
+      </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3 class="text-info">
-                    {% if experiments[0].participation_timestamp %}
-                    {{ experiments[0].participation_timestamp.strftime('%d.%m') }}
-                    {% elif experiments[0].time_stamp %}
-                    {{ experiments[0].time_stamp.strftime('%d.%m') }}
-                    {% endif %}
-                </h3>
-                <p class="text-muted mb-0">Последен експеримент</p>
-            </div>
+    <div class="col-md-4 mb-3">
+      <div class="card stat-card text-center">
+        <div class="card-body">
+          <h3 class="text-info">
+            {% if experiments[0].participation_timestamp %}
+              {{ experiments[0].participation_timestamp.strftime('%d.%m') }}
+            {% elif experiments[0].time_stamp %}
+              {{ experiments[0].time_stamp.strftime('%d.%m') }}
+            {% endif %}
+          </h3>
+          <div class="text-muted mb-0">Последен експеримент</div>
         </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Листа на експерименти -->
-<div class="row mt-4">
-    {% for experiment in experiments %}
-    <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-gradient" style="background: linear-gradient(45deg, #667eea, #764ba2);">
-                <div class="d-flex justify-content-between align-items-center text-white">
-                    <span><i class="bi bi-flask"></i> Експеримент #{{ experiment.experiment_id }}</span>
-                    <small>
-                        {% if experiment.participation_timestamp %}
-                        {{ experiment.participation_timestamp.strftime('%d.%m.%Y') }}
-                        {% elif experiment.time_stamp %}
-                        {{ experiment.time_stamp.strftime('%d.%m.%Y') }}
-                        {% endif %}
-                    </small>
-                </div>
-            </div>
-            <div class="card-body">
-                <!-- Реакција -->
-                <div class="reaction-equation text-center mb-3 p-3 bg-light rounded">
-                    <strong style="font-size: 18px; color: #764ba2;">
-                        {{ experiment.element1_symbol }} + {{ experiment.element2_symbol }} → {{ experiment.product }}
-                    </strong>
-                </div>
+  <!-- Toolbar (client-side filter/sort) -->
+  <div class="toolbar">
+    <div class="input-group search-input">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input id="search" class="form-control" placeholder="Пребарај по елемент/продукт/услов...">
+    </div>
+    <select id="sort" class="form-select" style="max-width:220px">
+      <option value="date_desc">Најново</option>
+      <option value="date_asc">Најстаро</option>
+      <option value="prod_az">Продукт (A–Z)</option>
+      <option value="elem_az">Елементи (A–Z)</option>
+    </select>
+  </div>
 
-                <!-- Детали -->
-                <div class="experiment-details">
-                    <p class="mb-2">
-                        <strong>Реактанти:</strong><br>
-                        <span class="text-muted">{{ experiment.element1_name }} + {{ experiment.element2_name }}</span>
-                    </p>
-
-                    <p class="mb-2">
-                        <strong>Услови:</strong><br>
-                        <span class="text-muted">{{ experiment.conditions or 'Стандардни услови' }}</span>
-                    </p>
-
-                    <p class="mb-2">
-                        <strong>Резултат:</strong><br>
-                        <span class="text-muted">{{ experiment.result[:80] }}{% if experiment.result|length > 80 %}...{%
-                            endif %}</span>
-                    </p>
-
-                    {% if experiment.safety_warning %}
-                    <div class="alert alert-warning py-2 px-2 mb-2">
-                        <small><strong>⚠️ Безбедност:</strong> {{ experiment.safety_warning }}</small>
-                    </div>
-                    {% endif %}
-
-                    {% if experiment.participation_timestamp or experiment.time_stamp %}
-                    <p class="text-muted text-center mt-3 mb-0">
-                        <small>
-                            <i class="bi bi-clock"></i>
-                            {% if experiment.participation_timestamp %}
-                            {{ experiment.participation_timestamp.strftime('%H:%M:%S') }}
-                            {% else %}
-                            {{ experiment.time_stamp.strftime('%H:%M:%S') }}
-                            {% endif %}
-                        </small>
-                    </p>
-                    {% endif %}
-                    {% if experiment.equipment and experiment.equipment|length > 0 %}
-                    <p class="mb-2">
-                        <strong>Опрема:</strong>
-                    <ul class="small text-muted mb-0">
-                        {% for eq in experiment.equipment %}
-                        <li>
-                            {{ eq.equipment_name }}
-                            {% if eq.type %}<span class="text-secondary">({{ eq.type }})</span>{% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    </p>
-                    {% else %}
-                    <p class="mb-2">
-                        <strong>Опрема:</strong>
-                        <span class="text-muted">Нема евидентирана опрема</span>
-                    </p>
-                    {% endif %}
-                </div>
-            </div>
+  <!-- Grid -->
+  <div id="myexp-grid" class="row mt-1">
+    {% for x in experiments %}
+    <div class="col-md-6 col-lg-4 mb-4 myexp-item"
+         data-id="{{ x.experiment_id }}"
+         data-prod="{{ (x.product or '')|lower }}"
+         data-elems="{{ (x.element1_symbol ~ ' ' ~ x.element2_symbol ~ ' ' ~ x.element1_name ~ ' ' ~ x.element2_name)|lower }}"
+         data-conds="{{ (x.conditions or '')|lower }}"
+         data-date="{% if x.participation_timestamp %}{{ x.participation_timestamp.strftime('%Y%m%d%H%M%S') }}{% elif x.time_stamp %}{{ x.time_stamp.strftime('%Y%m%d%H%M%S') }}{% else %}0000{% endif %}">
+      <div class="card exp-card h-100">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center text-white">
+            <span><i class="bi bi-flask"></i> Експеримент #{{ x.experiment_id }}</span>
+            <small>
+              {% if x.participation_timestamp %}{{ x.participation_timestamp.strftime('%d.%m.%Y') }}
+              {% elif x.time_stamp %}{{ x.time_stamp.strftime('%d.%m.%Y') }}{% endif %}
+            </small>
+          </div>
         </div>
+        <div class="card-body">
+          <div class="reaction-equation text-center mb-3 p-3 bg-light rounded">
+            <strong class="d-block eq">{{ x.element1_symbol }} + {{ x.element2_symbol }} → {{ x.product }}</strong>
+          </div>
+
+          <div class="experiment-details">
+            <p class="mb-2"><strong>Реактанти:</strong><br>
+              <span class="text-muted">{{ x.element1_name }} + {{ x.element2_name }}</span></p>
+
+            <p class="mb-2"><strong>Услови:</strong><br>
+              <span class="text-muted">{{ x.conditions or 'Стандардни услови' }}</span></p>
+
+            {% if x.result %}
+            <p class="mb-2"><strong>Резултат:</strong><br>
+              <span class="text-muted">{{ x.result[:100] }}{% if x.result|length>100 %}…{% endif %}</span></p>
+            {% endif %}
+
+            {% if x.safety_warning %}
+            <div class="alert alert-warning py-2 px-2 mb-2">
+              <small><strong>⚠️ Безбедност:</strong> {{ x.safety_warning }}</small>
+            </div>
+            {% endif %}
+
+            {% if x.equipment and x.equipment|length>0 %}
+            <p class="mb-2"><strong>Опрема:</strong></p>
+            <ul class="small text-muted mb-0">
+              {% for eq in x.equipment %}
+              <li>{{ eq.equipment_name }}{% if eq.type %} <span class="text-secondary">({{ eq.type }})</span>{% endif %}</li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p class="mb-2"><strong>Опрема:</strong> <span class="text-muted">Нема евидентирана опрема</span></p>
+            {% endif %}
+          </div>
+
+          {% if x.participation_timestamp or x.time_stamp %}
+          <p class="text-muted text-center mt-3 mb-0">
+            <small><i class="bi bi-clock"></i>
+              {% if x.participation_timestamp %}{{ x.participation_timestamp.strftime('%H:%M:%S') }}
+              {% elif x.time_stamp %}{{ x.time_stamp.strftime('%H:%M:%S') }}{% endif %}
+            </small>
+          </p>
+          {% endif %}
+        </div>
+      </div>
     </div>
     {% endfor %}
-</div>
-{% else %}
-<!-- Нема експерименти -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="alert alert-info text-center">
-            <h4>📚 Немате извршено експерименти</h4>
-            <p>Започнете со користење на виртуелната лабораторија за да создадете ваши експерименти.</p>
-            <a href="/laboratory" class="btn btn-primary">🔬 Отвори лабораторија</a>
-        </div>
-    </div>
-</div>
+  </div>
+
 {% endif %}
 
-<div class="mt-4 text-center">
-    <a href="/dashboard" class="btn btn-secondary">🏠 Dashboard</a>
-    <a href="/laboratory" class="btn btn-success">➕ Нов експеримент</a>
-    {% if user_role == 'teacher' %}
-    <a href="/experiments" class="btn btn-info">📋 Сите експерименти</a>
-    {% endif %}
+<div class="mt-3 text-center">
+  <a href="/dashboard" class="btn btn-secondary">🏠 Dashboard</a>
+  <a href="/laboratory" class="btn btn-success">➕ Нов експеримент</a>
+  {% if user_role == 'teacher' %}<a href="/experiments" class="btn btn-info">📋 Сите експерименти</a>{% endif %}
 </div>
+
+<script>
+  const items=[...document.querySelectorAll('.myexp-item')];
+  const search=document.getElementById('search');
+  const sortSel=document.getElementById('sort');
+
+  function applyFilters(){
+    const q=(search?.value||'').toLowerCase().trim();
+    items.forEach(it=>{
+      const hay=[it.dataset.prod,it.dataset.elems,it.dataset.conds].join(' ');
+      it.style.display = hay.includes(q) ? '' : 'none';
+    });
+  }
+  function applySort(){
+    const v=sortSel?.value||'date_desc';
+    const grid=document.getElementById('myexp-grid');
+    const sorted=[...items].sort((a,b)=>{
+      const ad=+a.dataset.date, bd=+b.dataset.date;
+      const ap=a.dataset.prod, bp=b.dataset.prod;
+      const ae=a.dataset.elems, be=b.dataset.elems;
+      if(v==='date_desc') return bd-ad;
+      if(v==='date_asc')  return ad-bd;
+      if(v==='prod_az')   return ap.localeCompare(bp,'mk');
+      if(v==='elem_az')   return ae.localeCompare(be,'mk');
+      return 0;
+    });
+    sorted.forEach(el=>grid.appendChild(el));
+  }
+  search?.addEventListener('input', applyFilters);
+  sortSel?.addEventListener('change', applySort);
+  applySort();
+</script>
 {% endblock %}

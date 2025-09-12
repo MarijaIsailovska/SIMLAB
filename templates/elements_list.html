@@ -2,93 +2,217 @@
 {% block title %}Хемиски елементи{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<style>
+  .page-hero{
+    background: linear-gradient(135deg,#232526,#414345);
+    color:#fff;border-radius:18px;padding:18px 22px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px
+  }
+  .toolbar{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0
+  }
+  .search-input{min-width:260px}
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-primary"><i class="bi bi-flask"></i> Хемиски елементи</h2>
-        {% if user_role == 'teacher' %}
-            <a href="/elements/add" class="btn btn-success">
-                <i class="bi bi-plus-circle"></i> Додај нов елемент
-            </a>
-        {% endif %}
-    </div>
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;padding:6px 12px;margin:4px;
+    border-radius:999px;background:#eef2ff;color:#3f51b5;font-weight:600;cursor:pointer;
+    border:1px solid rgba(63,81,181,.25); user-select:none
+  }
+  .chip.active{background:#3f51b5;color:#fff}
 
-    {% if error %}
-        <div class="alert alert-warning">{{ error }}</div>
-    {% else %}
-        <div class="row g-4">
-            {% for element in elements %}
-            <div class="col-sm-6 col-md-4 col-lg-3">
-                <div class="card element-card shadow-lg border-0 h-100 
-                    {% if element.hazard_type and (element.hazard_type != 'Нема опасност' and element.hazard_type != 'Нема') %} element-hazard {% endif %}">
-                    
-                    <div class="card-body text-center">
-                        <div class="element-symbol mb-2">{{ element.symbol }}</div>
-                        <h6 class="text-muted">{{ element.element_name }}</h6>
+  .elem-card{border:0;border-radius:16px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .elem-card .card-header{
+    background:linear-gradient(135deg,#6a11cb,#2575fc);
+    color:#fff;display:flex;justify-content:space-between;align-items:center
+  }
+  .type-badge{
+    background:#ffffff22;color:#fff;border-radius:999px;padding:2px 10px;font-size:.8rem
+  }
+  .line-clamp-3{
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden
+  }
+  .empty{
+    border:2px dashed #e9ecef;border-radius:16px;padding:24px;text-align:center;color:#6c757d
+  }
+  .badge-soft-success{
+    background:#e6f4ea;color:#166534;border:1px solid #cfead7;font-weight:600;
+  }
+  .badge-soft-danger{
+    background:#fde8e8;color:#b91c1c;border:1px solid #f5c2c7;font-weight:600;
+  }
+</style>
 
-                        <ul class="list-unstyled small mt-3">
-                            <li><strong>№:</strong> {{ element.atomic_number }}</li>
-                            <li><strong>Маса:</strong> {{ element.atomic_weight }}</li>
-                            {% if element.melting_point %}
-                                <li>Топење: {{ element.melting_point }}°C</li>
-                            {% endif %}
-                            {% if element.boiling_point %}
-                                <li>Вриење: {{ element.boiling_point }}°C</li>
-                            {% endif %}
-                        </ul>
-
-                        {% if element.hazard_type and element.hazard_type != 'Нема опасност' %}
-                        <span class="badge bg-danger mt-2">⚠ {{ element.hazard_type }}</span>
-                        {% else %}
-                        <span class="badge bg-success mt-2">✔ Безбедно</span>
-                        {% endif %}
-                        
-                        <div class="d-flex justify-content-center gap-2 mt-3">
-                            <a href="/elements/{{ element.element_id }}" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-search"></i> Детали
-                            </a>
-                            {% if user_role == 'teacher' %}
-                                <a href="/elements/{{ element.element_id }}/edit" class="btn btn-outline-warning btn-sm">
-                                    <i class="bi bi-pencil"></i> Едитирај
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    <div class="mt-4">
-        <a href="/dashboard" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Назад до Dashboard
-        </a>
-    </div>
+<div class="page-hero">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-flask me-1"></i> Хемиски елементи</h2>
+    <div class="opacity-75">Вкупно: <b>{{ elements|length if elements else 0 }}</b> записи</div>
+  </div>
+  {% if user_role == 'teacher' %}
+    <a href="/elements/add" class="btn btn-light fw-semibold">
+      <i class="bi bi-plus-circle"></i> Додај нов елемент
+    </a>
+  {% endif %}
 </div>
 
-<style>
-.element-card {
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    border-radius: 15px;
-    background: linear-gradient(145deg, #ffffff, #f1f5f9);
-}
-.element-card:hover {
-    transform: translateY(-6px) scale(1.03);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-}
-.element-symbol {
-    font-size: 2.8rem;
-    font-weight: bold;
-    color: #0d6efd; /* сина за нормални */
-}
-/* Ако е опасен елемент */
-.element-hazard {
-    background: linear-gradient(145deg, #fff5f5, #ffecec);
-    border: 1px solid #f5c2c7;
-}
-.element-hazard .element-symbol {
-    color: #dc3545; /* црвена боја за опасни */
-}
-</style>
+<div class="toolbar">
+  <div class="input-group search-input">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input id="search" class="form-control" placeholder="Пребарај по симбол/име/опис…">
+  </div>
+
+  <select id="sort" class="form-select" style="max-width:260px">
+    <option value="name_az">Сортирај: Име (A–Z)</option>
+    <option value="name_za">Име (Z–A)</option>
+    <option value="symbol_az">Симбол (A–Z)</option>
+    <option value="symbol_za">Симбол (Z–A)</option>
+    <option value="atomic_asc">Атомски број ↑</option>
+    <option value="atomic_desc">Атомски број ↓</option>
+    <option value="weight_asc">Атомска маса ↑</option>
+    <option value="weight_desc">Атомска маса ↓</option>
+  </select>
+
+  <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
+    <small class="text-muted">Филтер по опасност:</small>
+    <div id="hazard-chips"></div>
+  </div>
+</div>
+
+{% if not elements %}
+  <div class="empty">
+    <div style="font-size:36px">🧪</div>
+    <div class="mt-2">Нема внесени елементи.</div>
+    {% if user_role == 'teacher' %}
+      <a href="/elements/add" class="btn btn-primary btn-sm mt-2">Додај прв елемент</a>
+    {% endif %}
+  </div>
+{% else %}
+  <div id="elem-grid" class="row">
+    {% for el in elements %}
+    {% set hazard_txt = (el.hazard_type or '') %}
+    {% set hazard_norm = hazard_txt|lower|trim %}
+    {% set hazard_clean =
+         hazard_norm if hazard_norm not in ['','нема','нема опасност','безбедно','safe','none'] else 'без опасност' %}
+    <div class="col-md-6 col-lg-4 mb-3 elem-item"
+         data-id="{{ el.element_id }}"
+         data-symbol="{{ el.symbol|lower }}"
+         data-name="{{ el.element_name|lower }}"
+         data-atomic="{{ el.atomic_number or 0 }}"
+         data-weight="{{ el.atomic_weight or 0 }}"
+         data-hazard="{{ hazard_clean }}"
+         data-text="{{ (el.symbol ~ ' ' ~ el.element_name ~ ' ' ~ hazard_txt ~ ' ' ~ (el.description_element or ''))|lower }}">
+      <div class="card elem-card h-100">
+        <div class="card-header">
+          <h5 class="mb-0 text-truncate">{{ el.element_name }}</h5>
+          <span class="type-badge" title="Атомски број">№ {{ el.atomic_number }}</span>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex justify-content-center align-items-center mb-2" style="gap:10px">
+            <div class="display-6 fw-bold">{{ el.symbol }}</div>
+            <span class="text-muted">({{ "%.2f"|format(el.atomic_weight) if el.atomic_weight is not none else "—" }})</span>
+          </div>
+
+          <ul class="list-unstyled small text-muted mb-2">
+            {% if el.melting_point %}<li>Топење: {{ el.melting_point }}°C</li>{% endif %}
+            {% if el.boiling_point %}<li>Вриење: {{ el.boiling_point }}°C</li>{% endif %}
+          </ul>
+
+          {% if hazard_clean != 'без опасност' %}
+            <span class="badge badge-soft-danger">⚠ {{ el.hazard_type }}</span>
+          {% else %}
+            <span class="badge badge-soft-success">✔ Безбедно</span>
+          {% endif %}
+
+          {% if el.description_element %}
+            <p class="mt-2 line-clamp-3">{{ el.description_element }}</p>
+          {% endif %}
+
+          <div class="mt-auto d-flex gap-2">
+            <a href="/elements/{{ el.element_id }}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-eye"></i> Детали
+            </a>
+            {% if user_role == 'teacher' %}
+            <a href="/elements/{{ el.element_id }}/edit" class="btn btn-outline-warning btn-sm">
+              <i class="bi bi-pencil-square"></i> Едитирај
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="mt-3">
+  <a href="/dashboard" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Назад до Dashboard</a>
+</div>
+
+<script>
+  // Клиентска логика (ист „feeling“ како кај опрема)
+  const items   = [...document.querySelectorAll('.elem-item')];
+  const grid    = document.getElementById('elem-grid');
+  const search  = document.getElementById('search');
+  const sortSel = document.getElementById('sort');
+  const chipsWrap = document.getElementById('hazard-chips');
+
+  // 1) генерирај чипови по hazard (вкл. „без опасност“)
+  const HAZ = [...new Set(items.map(i => i.dataset.hazard))].sort((a,b)=>{
+    if(a==='без опасност') return -1;
+    if(b==='без опасност') return 1;
+    return a.localeCompare(b,'mk');
+  });
+  let activeHaz = null;
+  HAZ.forEach(h=>{
+    const chip = document.createElement('button');
+    chip.type='button'; chip.className='chip'; chip.textContent=h;
+    chip.addEventListener('click', ()=>{
+      if(activeHaz===h){ activeHaz=null; chip.classList.remove('active'); }
+      else{
+        activeHaz=h;
+        [...chipsWrap.children].forEach(c=>c.classList.remove('active'));
+        chip.classList.add('active');
+      }
+      applyFilters();
+    });
+    chipsWrap.appendChild(chip);
+  });
+
+  // 2) пребарување
+  search.addEventListener('input', applyFilters);
+
+  // 3) сортирање
+  sortSel.addEventListener('change', applySort);
+  function applySort(){
+    const val = sortSel.value;
+    const sorted = [...items].sort((a,b)=>{
+      const an=a.dataset.name, bn=b.dataset.name;
+      const as=a.dataset.symbol, bs=b.dataset.symbol;
+      const aZ=parseFloat(a.dataset.atomic)||0, bZ=parseFloat(b.dataset.atomic)||0;
+      const aW=parseFloat(a.dataset.weight)||0, bW=parseFloat(b.dataset.weight)||0;
+      if(val==='name_az')     return an.localeCompare(bn,'mk');
+      if(val==='name_za')     return bn.localeCompare(an,'mk');
+      if(val==='symbol_az')   return as.localeCompare(bs,'mk');
+      if(val==='symbol_za')   return bs.localeCompare(as,'mk');
+      if(val==='atomic_asc')  return aZ-bZ;
+      if(val==='atomic_desc') return bZ-aZ;
+      if(val==='weight_asc')  return aW-bW;
+      if(val==='weight_desc') return bW-aW;
+      return 0;
+    });
+    sorted.forEach(el=>grid.appendChild(el));
+  }
+
+  // 4) комбиниран филтер (search + hazard chip)
+  function applyFilters(){
+    const q = (search.value||'').toLowerCase().trim();
+    items.forEach(it=>{
+      const okText = it.dataset.text.includes(q);
+      const okHaz  = !activeHaz || it.dataset.hazard === activeHaz;
+      it.style.display = (okText && okHaz) ? '' : 'none';
+    });
+  }
+
+  // иницијално
+  applySort(); // default: name A–Z
+</script>
 {% endblock %}

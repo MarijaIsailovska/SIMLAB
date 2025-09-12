@@ -24,12 +24,25 @@
         <tbody>
             {% for experiment in experiments %}
             <tr>
-                <td>{{ experiment.full_name }}</td>
+                <td>
+                    {{ experiment.get('full_name')
+                    or experiment.get('student_name')
+                    or ('#' ~ (experiment.get('student_id')|string)) }}
+                </td>
+
                 <td>
                     <span class="badge bg-primary">#{{ experiment.experiment_id }}</span>
                 </td>
                 <td>{{ experiment.result[:50] }}{% if experiment.result|length > 50 %}...{% endif %}</td>
-                <td>{{ experiment.participation_time.strftime('%d.%m.%Y %H:%M') if experiment.participation_time }}</td>
+                {% set ts = experiment.participation_date or expperiment.participation_time or experiment.time_stamp %}
+                <td>
+                    {% if ts %}
+                    {{ ts.strftime('%Y-%m-%d %H:%M') }}
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+
                 <td><span class="badge bg-success">Завршен</span></td>
             </tr>
             {% else %}
@@ -64,7 +77,8 @@
     <div class="col-md-4">
         <div class="card text-center">
             <div class="card-body">
-                {% set avg = (experiments|length / experiments|map(attribute='full_name')|unique|list|length)|round(1) if experiments %}
+                {% set avg = (experiments|length / experiments|map(attribute='full_name')|unique|list|length)|round(1)
+                if experiments %}
                 <h5 class="card-title">{{ avg if avg else 0 }}</h5>
                 <p class="card-text">Просечно по студент</p>
             </div>

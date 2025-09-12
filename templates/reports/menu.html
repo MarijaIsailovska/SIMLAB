@@ -2,127 +2,218 @@
 {% block title %}Извештаи{% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-12">
-    <h2>Извештаи и статистики</h2>
-    <p class="text-muted">Изберете извештај за преглед</p>
+<style>
+  .page-hero{
+    background: linear-gradient(135deg,#232526,#414345);
+    color:#fff;border-radius:18px;padding:18px 22px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px
+  }
+  .page-hero .sub{opacity:.85}
+  .hero-actions .btn-ghost{
+    background:#00000010;border:1px solid #ffffff55;color:#fff
+  }
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
+  .search-input{min-width:300px}
+
+  .panel{border:0;border-radius:16px;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .panel h6{font-weight:800;letter-spacing:.2px}
+
+  .tile{
+    display:flex;gap:12px;align-items:flex-start;
+    padding:12px 14px;margin-bottom:10px;border-radius:12px;
+    background:#fff;border:0;text-decoration:none;color:inherit;
+    box-shadow:0 6px 16px rgba(0,0,0,.06); transition:transform .12s ease, box-shadow .12s ease
+  }
+  .tile:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.10)}
+  .tile i{font-size:1.2rem;opacity:.9;margin-top:.2rem}
+  .tile strong{display:block}
+  .tile small{color:#6c757d}
+  .pill{
+    background:#eef2ff;color:#3f51b5;border:1px solid rgba(63,81,181,.25);
+    border-radius:999px;padding:6px 10px;font-weight:600
+  }
+
+  .grp-title{display:flex;align-items:center;gap:8px;margin-bottom:.5rem}
+  .grp-title i{opacity:.85}
+</style>
+
+<!-- HERO -->
+<div class="page-hero">
+  <div>
+    <h2 class="mb-0">Извештаи и статистики</h2>
+    <div class="sub">Изберете извештај за преглед или пребарајте по наслов/опис</div>
+  </div>
+  <div class="hero-actions d-flex align-items-center gap-2">
+    <span class="pill d-none d-md-inline"><i class="bi bi-graph-up-arrow"></i> аналитика</span>
+    <a href="/dashboard" class="btn btn-light btn-sm fw-semibold"><i class="bi bi-speedometer2"></i> Dashboard</a>
   </div>
 </div>
 
-<div class="row mt-4">
-  <!-- Активност на студенти -->
-  <div class="col-md-6 mb-4">
-    <div class="list-group">
-      <h5 class="mb-2"><i class="bi bi-people"></i> Активност на студенти</h5>
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="input-group search-input">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input id="rep-search" class="form-control" placeholder="Пребарај: студент, опрема, најчесто, учество...">
+  </div>
+  <div class="ms-auto d-flex align-items-center gap-2">
+    <span class="pill"><i class="bi bi-funnel"></i> групирано по тема</span>
+  </div>
+</div>
 
-      <a href="/my_students" class="list-group-item list-group-item-action">
-        <strong>Мои студенти</strong><br>
-        <small>Преглед на активностите на вашите студенти</small>
-      </a>
+<!-- GRID -->
+<div id="reports-grid" class="row">
+  <!-- ГРУПА: Активност на студенти -->
+  <div class="col-lg-4 mb-4">
+    <div class="panel card h-100">
+      <div class="card-body">
+        <div class="grp-title"><i class="bi bi-people"></i><h6 class="mb-0">Активност на студенти</h6></div>
 
-      <a href="/reports/inactive_students" class="list-group-item list-group-item-action">
-        <strong>Неактивни студенти</strong><br>
-        <small>Студенти кои не учествувале во експерименти</small>
-      </a>
+        <a href="/my_students" class="tile" data-text="мои студенти активност учество напредок">
+          <i class="bi bi-person-check text-primary"></i>
+          <div>
+            <strong>Мои студенти</strong>
+            <small>Преглед на активностите на вашите студенти</small>
+          </div>
+        </a>
 
-      <a href="/reports/low_activity_students" class="list-group-item list-group-item-action">
-        <strong>Слабо активни студенти</strong><br>
-        <small>Студенти со помалку од 3 експерименти</small>
-      </a>
+        <a href="/reports/inactive_students" class="tile" data-text="неактивни без учество студенти">
+          <i class="bi bi-emoji-frown text-primary"></i>
+          <div>
+            <strong>Неактивни студенти</strong>
+            <small>Студенти кои не учествувале во експерименти</small>
+          </div>
+        </a>
+
+        <a href="/reports/low_activity_students" class="tile" data-text="слабо активни малку експерименти под 3">
+          <i class="bi bi-thermometer-low text-primary"></i>
+          <div>
+            <strong>Слабо активни студенти</strong>
+            <small>Студенти со помалку од 3 експерименти</small>
+          </div>
+        </a>
+
+        <a href="/reports/adv/students_below_threshold?max=3" class="tile" data-text="под праг threshold параметар max">
+          <i class="bi bi-arrow-bar-down text-primary"></i>
+          <div>
+            <strong>Под праг на учество</strong>
+            <small>Флексибилно: под дефиниран праг на учества (параметар <code>max</code>)</small>
+          </div>
+        </a>
+
+      </div>
     </div>
   </div>
 
-  <!-- Детални извештаи -->
-  <div class="col-md-6 mb-4">
-    <div class="list-group">
-      <h5 class="mb-2"><i class="bi bi-journal-text"></i> Детални извештаи</h5>
+  <!-- ГРУПА: Детални извештаи -->
+  <div class="col-lg-4 mb-4">
+    <div class="panel card h-100">
+      <div class="card-body">
+        <div class="grp-title"><i class="bi bi-journal-text"></i><h6 class="mb-0">Детални извештаи</h6></div>
 
-      <a href="/reports/detailed_experiments" class="list-group-item list-group-item-action">
-        <strong>Детални експерименти</strong><br>
-        <small>Сите експерименти по студент</small>
-      </a>
+        <a href="/reports/detailed_experiments" class="tile" data-text="детални експерименти студенти временска линија">
+          <i class="bi bi-journal-richtext text-success"></i>
+          <div>
+            <strong>Детални експерименти</strong>
+            <small>Сите експерименти по студент, со временска линија</small>
+          </div>
+        </a>
 
-      <a href="/reports/element_views" class="list-group-item list-group-item-action">
-        <strong>Прегледи на елементи</strong><br>
-        <small>Кој корисник кои елементи ги прегледал</small>
-      </a>
+        <a href="/reports/element_views" class="tile" data-text="прегледи елементи кој ги гледал popularnost">
+          <i class="bi bi-eye text-success"></i>
+          <div>
+            <strong>Прегледи на елементи</strong>
+            <small>Кој корисник кои елементи ги прегледал</small>
+          </div>
+        </a>
 
-      <a href="/reports/teacher_statistics" class="list-group-item list-group-item-action">
-        <strong>Статистики по професор</strong><br>
-        <small>Споредба помеѓу професори</small>
-      </a>
+        <a href="/reports/teacher_statistics" class="tile" data-text="статистики професор споредба наставници">
+          <i class="bi bi-bar-chart text-success"></i>
+          <div>
+            <strong>Статистики по професор</strong>
+            <small>Агрегати и споредба по професор</small>
+          </div>
+        </a>
+
+        <a href="/reports/adv/experiment_participants" class="tile" data-text="учесници по експеримент листа селекција">
+          <i class="bi bi-people-fill text-success"></i>
+          <div>
+            <strong>Учесници по експеримент</strong>
+            <small>Изберете експеримент и видете ги учесниците</small>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ГРУПА: Напредни (SQL) -->
+  <div class="col-lg-4 mb-4">
+    <div class="panel card h-100">
+      <div class="card-body">
+        <div class="grp-title"><i class="bi bi-bar-chart-steps"></i><h6 class="mb-0">Напредни извештаи (SQL)</h6></div>
+
+        <a href="/reports/adv/student_experiment_counts" class="tile" data-text="студенти број експерименти count">
+          <i class="bi bi-list-ol text-warning"></i>
+          <div>
+            <strong>Студенти и број на експерименти</strong>
+            <small>Колку експерименти има извршено секој студент</small>
+          </div>
+        </a>
+
+        <a href="/reports/adv/equipment_usage" class="tile" data-text="користеност опрема инструмент колку пати">
+          <i class="bi bi-hammer text-warning"></i>
+          <div>
+            <strong>Користеност на опрема</strong>
+            <small>Број на употреби по инструмент</small>
+          </div>
+        </a>
+
+        <a href="/reports/adv/avg_equipment_per_experiment" class="tile" data-text="просек опрема по експеримент average">
+          <i class="bi bi-diagram-3 text-warning"></i>
+          <div>
+            <strong>Просечен број инструменти</strong>
+            <small>Просек на опрема по експеримент</small>
+          </div>
+        </a>
+
+        <a href="/reports/adv/most_used_elements" class="tile" data-text="најчесто користени елементи реакции">
+          <i class="bi bi-stars text-warning"></i>
+          <div>
+            <strong>Најчесто користени елементи</strong>
+            <small>Елементи кои најмногу се појавуваат во реакции</small>
+          </div>
+        </a>
+
+        <a href="/reports/adv/most_performed_experiments" class="tile" data-text="најреализирани експерименти најмногу учесници">
+          <i class="bi bi-trophy text-warning"></i>
+          <div>
+            <strong>Најреализирани експерименти</strong>
+            <small>Експерименти со најмногу учесници</small>
+          </div>
+        </a>
+
+      </div>
     </div>
   </div>
 </div>
 
-<hr class="my-4">
-
-<!-- Напредни извештаи (SQL) -->
-<div class="row">
-  <div class="col-12">
-    <h4><i class="bi bi-bar-chart-steps"></i> Напредни извештаи (SQL)</h4>
-    <p class="text-muted">Извештаи базирани на директни SQL-записи</p>
-  </div>
-
-  <div class="col-md-6 mb-4">
-    <div class="list-group">
-      <h6 class="mb-2">Студенти & учество</h6>
-
-      <a href="/reports/adv/student_experiment_counts" class="list-group-item list-group-item-action">
-        <strong>Студенти и број на експерименти</strong><br>
-        <small>Колку експерименти има извршено секој студент</small>
-      </a>
-
-      <a href="/reports/adv/experiment_participants" class="list-group-item list-group-item-action">
-        <strong>Учесници по експеримент</strong><br>
-        <small>Изберете експеримент и видете кои студенти учествувале</small>
-      </a>
-
-      <a href="/reports/adv/never_participated_students" class="list-group-item list-group-item-action">
-        <strong>Никогаш не учествувале</strong><br>
-        <small>Студенти без ниту едно учество во експерименти</small>
-      </a>
-
-      <a href="/reports/adv/students_below_threshold?max=3" class="list-group-item list-group-item-action">
-        <strong>Под праг на учество</strong><br>
-        <small>Студенти со помалку од 3 експерименти (параметар: <code>max</code>)</small>
-      </a>
-    </div>
-  </div>
-
-  <div class="col-md-6 mb-4">
-    <div class="list-group">
-      <h6 class="mb-2">Опрема, елементи & популарност</h6>
-
-      <a href="/reports/adv/equipment_usage" class="list-group-item list-group-item-action">
-        <strong>Користеност на опрема</strong><br>
-        <small>Колку пати е користен секој инструмент</small>
-      </a>
-
-      <a href="/reports/adv/avg_equipment_per_experiment" class="list-group-item list-group-item-action">
-        <strong>Просечен број инструменти</strong><br>
-        <small>Просек на опрема по експеримент</small>
-      </a>
-
-      <a href="/reports/adv/most_used_elements" class="list-group-item list-group-item-action">
-        <strong>Најчесто користени елементи</strong><br>
-        <small>Елементи кои најмногу се појавуваат во реакции</small>
-      </a>
-
-      <a href="/reports/adv/most_performed_experiments" class="list-group-item list-group-item-action">
-        <strong>Најреализирани експерименти</strong><br>
-        <small>Експерименти со најмногу учесници</small>
-      </a>
-
-      <a href="/reports/adv/student_views" class="list-group-item list-group-item-action">
-        <strong>Прегледи: елементи & опрема</strong><br>
-        <small>Број на прегледани елементи/опрема по студент</small>
-      </a>
-    </div>
-  </div>
+<div class="mt-2 text-center">
+  <a href="/dashboard" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Назад до Dashboard</a>
 </div>
 
-<div class="mt-4">
-  <a href="/dashboard" class="btn btn-primary">Назад до Dashboard</a>
-</div>
+<script>
+  // Едноставно пребарување низ сите плочки (tile)
+  (function(){
+    const q = document.getElementById('rep-search');
+    if(!q) return;
+    const tiles = [...document.querySelectorAll('#reports-grid a.tile')];
+    q.addEventListener('input', ()=>{
+      const s = (q.value||'').toLowerCase().trim();
+      tiles.forEach(a=>{
+        const hay = (a.textContent + ' ' + (a.dataset.text||'')).toLowerCase();
+        a.style.display = hay.includes(s) ? '' : 'none';
+      });
+    });
+  })();
+</script>
 {% endblock %}

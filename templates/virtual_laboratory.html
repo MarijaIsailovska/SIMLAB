@@ -2,303 +2,409 @@
 {% block title %}Виртуелна лабораторија - Студент{% endblock %}
 
 {% block content %}
+<style>
+  :root{
+    --bg:#f7f9fc; --card:#ffffff;
+    --border:#e6ebf2; --muted:#6c7a8a;
+    --primary:#2c7be5; --success:#2bb673; --warning:#f59f00; --danger:#e03131;
+  }
+  body{background:var(--bg)}
+  .lab-grid{display:grid;grid-template-columns:1fr 520px 1fr;gap:28px;align-items:start}
+  @media (max-width: 1200px){.lab-grid{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,.05)}
+  .panel-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+  .panel-title{margin:0;font-weight:700}
+  .panel-body{padding:12px 12px 6px}
+  .filter-input{width:100%;border-radius:12px;border:1px solid var(--border);padding:10px 12px;margin-bottom:10px}
+  .chips{min-height:46px}
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;padding:8px 12px;margin:6px;border-radius:999px;color:#fff;
+    font-weight:700;cursor:grab;user-select:none;border:1px solid rgba(255,255,255,.25);
+    box-shadow:0 6px 14px rgba(0,0,0,.12);transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease
+  }
+  .chip small{opacity:.95;font-weight:600}
+  .chip:active{transform:scale(.97)}
+  .chip[data-disabled="1"]{opacity:.35;cursor:not-allowed;box-shadow:none}
+
+  .bench.panel-body{padding:18px}
+  .drop-wrap{display:grid;grid-template-columns:1fr 100px 1fr;gap:16px;align-items:center}
+  .drop-zone{
+    height:160px;border:2px dashed var(--primary);border-radius:18px;background:#f3f7ff;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;transition:all .2s ease
+  }
+  .drop-zone.hover{background:#eaf2ff;border-color:#4c9dff;box-shadow:0 10px 20px rgba(76,157,255,.2)}
+  .placeholder{color:var(--muted);font-weight:700;text-align:center;line-height:1.25}
+  .pill{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    width:126px;height:126px;border-radius:999px;color:#fff;font-weight:900;font-size:34px;
+    letter-spacing:.3px;box-shadow:0 16px 30px rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.25)
+  }
+  .pill span{font-size:12px;font-weight:700;opacity:.95;margin-top:3px}
+
+  .center-controls{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .btn-round{border-radius:999px;padding:10px 16px}
+
+  #result-card{border-radius:14px}
+  .result-eq{font-size:24px;font-weight:800;margin:10px 0}
+  .pop{animation:pop .28s ease}
+  @keyframes pop{0%{transform:scale(.94);opacity:0}100%{transform:scale(1);opacity:1}}
+
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .badge-soft{border:1px solid var(--border);background:#f7fbff;color:#264b7f;border-radius:10px;padding:8px 10px}
+</style>
+
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12 text-center mb-4">
-            <h2>🧪 Виртуелна хемиска лабораторија</h2>
-            <p class="lead">Изберете два елементи за да симулирате реакција</p>
+  <div class="row mb-3">
+    <div class="col-12 text-center">
+      <h2 class="mb-1">🧪 Виртуелна хемиска лабораторија</h2>
+      <p class="lead mb-1">Влечи-и-пушти два елементи на „работната маса“, па кликни <b>Реагирај</b>.</p>
+      <small class="text-muted">* Боја по hazard (или атомски број) — можеш да смениш подолу.</small>
+    </div>
+  </div>
+
+  <div class="lab-grid">
+    <!-- ЛЕВО -->
+    <div class="panel">
+      <div class="panel-head">
+        <h6 class="panel-title">Елементи (лево)</h6>
+        <div class="btn-group btn-group-sm" role="group" aria-label="color-mode">
+          <input type="radio" class="btn-check" name="colorMode" id="cm-hazard" checked>
+          <label class="btn btn-outline-secondary" for="cm-hazard">Hazard</label>
+          <input type="radio" class="btn-check" name="colorMode" id="cm-atomic">
+          <label class="btn btn-outline-secondary" for="cm-atomic">Atomic</label>
         </div>
+      </div>
+      <div class="panel-body">
+        <input class="filter-input" id="filter-left" placeholder="🔎 филтрирај по симбол/име..."/>
+        <div id="list-left" class="chips"></div>
+      </div>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card shadow-lg">
-                <div class="card-body p-4">
-                    <!-- Симулациска област -->
-                    <div style="display: grid; grid-template-columns: 1fr 150px 1fr; gap: 40px; align-items: center; margin-bottom: 40px;">
-                        
-                        <!-- Прв елемент -->
-                        <div class="text-center">
-                            <div id="element1-display" style="width: 130px; height: 130px; border: 3px dashed #007bff; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto; background: #f8f9fa; transition: all 0.3s ease;">
-                                <span style="color: #666;">Избери<br>Елемент 1</span>
-                            </div>
-                            <select class="form-select mt-3" id="element1-select" style="max-width: 200px; margin: 15px auto;">
-                                <option value="">-- Избери прв елемент --</option>
-                                {% for element in elements %}
-                                <option value="{{ element.symbol }}" data-name="{{ element.element_name }}">
-                                    {{ element.symbol }} - {{ element.element_name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- Центар со копче -->
-                        <div class="text-center">
-                            <div style="font-size: 24px; color: #28a745; font-weight: bold; margin-bottom: 15px;">+</div>
-                            <button class="btn btn-success btn-lg" id="react-btn" disabled onclick="simulateReaction()" style="border-radius: 20px; padding: 12px 25px;">
-                                ⚗️ Реагирај
-                            </button>
-                            <div style="font-size: 24px; color: #007bff; font-weight: bold; margin-top: 15px;">→</div>
-                        </div>
-                        
-                        <!-- Втор елемент -->
-                        <div class="text-center">
-                            <div id="element2-display" style="width: 130px; height: 130px; border: 3px dashed #007bff; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto; background: #f8f9fa; transition: all 0.3s ease;">
-                                <span style="color: #666;">Избери<br>Елемент 2</span>
-                            </div>
-                            <select class="form-select mt-3" id="element2-select" style="max-width: 200px; margin: 15px auto;">
-                                <option value="">-- Избери втор елемент --</option>
-                                {% for element in elements %}
-                                <option value="{{ element.symbol }}" data-name="{{ element.element_name }}">
-                                    {{ element.symbol }} - {{ element.element_name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Резултат област -->
-                    <div id="result-area" style="display: none; margin-top: 30px;">
-                        <div class="card" id="result-card">
-                            <div class="card-body text-center">
-                                <div id="result-content"></div>
-                                
-                                <!-- Копче за учество во експеримент - САМО ЗА СТУДЕНТИ -->
-                                <button class="btn btn-primary mt-3" id="participate-btn" onclick="participateInExperiment()" style="display: none;">
-                                    📝 Запиши учество во експеримент
-                                </button>
-                                
-                                <div id="experiment-details" style="display: none; margin-top: 20px;">
-                                    <!-- Тука ќе се прикажат деталите за експериментот -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- СРЕДИНА (работна маса) -->
+    <div class="panel">
+      <div class="panel-head">
+        <h6 class="panel-title mb-0">Работна маса</h6>
+        <div class="text-muted small" id="selection-hint">Нема избрани елементи</div>
+      </div>
+      <div class="panel-body bench">
+        <div class="drop-wrap mb-2">
+          <div id="drop1" class="drop-zone">
+            <div class="placeholder">Влечи тука<br><b>Елемент 1</b></div>
+          </div>
+
+          <div class="center-controls">
+            <button class="btn btn-outline-secondary btn-round" id="swap-btn" title="Замени" disabled>⇄</button>
+            <button class="btn btn-success btn-round" id="react-btn" disabled>⚗️ Реагирај</button>
+            <button class="btn btn-outline-danger btn-round" id="clear-btn" disabled>✖</button>
+          </div>
+
+          <div id="drop2" class="drop-zone">
+            <div class="placeholder">Влечи тука<br><b>Елемент 2</b></div>
+          </div>
+        </div>
+
+        <div class="info-grid" id="selected-info" style="display:none">
+          <div class="badge-soft" id="info-e1"></div>
+          <div class="badge-soft" id="info-e2"></div>
+        </div>
+
+        <div id="result-area" style="display:none">
+          <div class="card border-success mt-3" id="result-card">
+            <div class="card-body text-center">
+              <div id="result-content"></div>
+              <button class="btn btn-primary mt-3" id="participate-btn" style="display:none">
+                📝 Запиши учество во експеримент
+              </button>
+              <div id="experiment-details" style="display:none;margin-top:16px"></div>
             </div>
+          </div>
         </div>
+      </div>
     </div>
-</div>
 
-<div class="mt-4 text-center">
+    <!-- ДЕСНО -->
+    <div class="panel">
+      <div class="panel-head">
+        <h6 class="panel-title">Елементи (десно)</h6>
+        <span class="small text-muted" id="count-right"></span>
+      </div>
+      <div class="panel-body">
+        <input class="filter-input" id="filter-right" placeholder="🔎 филтрирај по симбол/име..."/>
+        <div id="list-right" class="chips"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 text-center">
     <a href="/dashboard" class="btn btn-secondary">Назад до Dashboard</a>
     <a href="/my-experiments" class="btn btn-warning">📊 Мои Експерименти</a>
+  </div>
 </div>
 
 <script>
-let selectedElements = {};
+/* ---------- Податоци од сервер ---------- */
+const ELEMENTS = {{ elements|tojson|safe }};
+
+/* ---------- Состојба ---------- */
+let selected = { e1:null, e2:null };
 let currentReactionData = null;
-let currentExperimentId = null;
+let colorMode = 'hazard'; // 'hazard' | 'atomic'
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('element1-select').addEventListener('change', function() {
-        updateElementDisplay(this, 'element1-display', 'element1');
-        checkReactionReady();
+/* ---------- Палета по hazard (флексибилна и со македонски клучни зборови) ---------- */
+const HAZARD_PALETTE = [
+  {k:['flammable','запал'], base:'#e85d04'},
+  {k:['toxic','токс'],      base:'#6a040f'},
+  {k:['corros','короз'],    base:'#2a9d8f'},
+  {k:['radio','радио'],     base:'#ffd60a'},
+  {k:['inert','инерт','неутрал'], base:'#6c757d'},
+];
+function pickHazardBase(el){
+  const t = (el.hazard_type || '').toLowerCase();
+  for(const h of HAZARD_PALETTE){
+    if(h.k.some(x => t.includes(x))) return h.base;
+  }
+  return '#2c7be5'; // default
+}
+
+/* ---------- Бои ---------- */
+function shade(hex, pct){
+  // hex -> darker/lighter
+  let c = hex.replace('#','');
+  if(c.length===3){ c = c.split('').map(x=>x+x).join(''); }
+  const num = parseInt(c,16);
+  let r = (num>>16) + Math.round(255*pct);
+  let g = ((num>>8)&0x00FF) + Math.round(255*pct);
+  let b = (num&0x0000FF) + Math.round(255*pct);
+  r = Math.max(0,Math.min(255,r)); g = Math.max(0,Math.min(255,g)); b = Math.max(0,Math.min(255,b));
+  return '#' + (r<<16 | g<<8 | b).toString(16).padStart(6,'0');
+}
+function gradFromHex(hex){ return `linear-gradient(135deg, ${hex}, ${shade(hex,-0.18)})`; }
+function gradFromAtomic(n){
+  const h = (Number(n||0)*29)%360;
+  return `linear-gradient(135deg, hsl(${h} 80% 48%), hsl(${(h+28)%360} 82% 44%))`;
+}
+function chipBackground(el){
+  return colorMode==='hazard' ? gradFromHex(pickHazardBase(el)) : gradFromAtomic(el.atomic_number);
+}
+
+/* ---------- Chips / Pills / Info ---------- */
+function chipHTML(el){
+  const bg = chipBackground(el);
+  return `
+    <div class="chip" draggable="true"
+         data-symbol="${el.symbol}" data-name="${el.element_name}"
+         data-atomic="${el.atomic_number||0}" data-hazard="${el.hazard_type||''}"
+         style="background:${bg}">
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:16px;font-weight:900">${el.symbol}</span>
+        <small>${el.element_name}</small>
+      </div>
+    </div>`;
+}
+function pillHTML(el){
+  const bg = chipBackground(el);
+  return `<div class="pill pop" style="background:${bg}">${el.symbol}<span>${el.element_name}</span></div>`;
+}
+function infoHTML(el){
+  const mp = (el.melting_point ?? '') === '' ? '—' : el.melting_point;
+  const bp = (el.boiling_point ?? '') === '' ? '—' : el.boiling_point;
+  const hz = el.hazard_type || '—';
+  return `<b>${el.symbol}</b> · ${el.element_name}<br/>
+          <small>№ ${el.atomic_number} · MP: ${mp} · BP: ${bp} · Hazard: ${hz}</small>`;
+}
+
+/* ---------- Рендер листи + филтри ---------- */
+function renderLists(){
+  const html = ELEMENTS.map(chipHTML).join('');
+  const L = document.getElementById('list-left');
+  const R = document.getElementById('list-right');
+  L.innerHTML = html; R.innerHTML = html;
+  document.getElementById('count-right').innerText = `${ELEMENTS.length} елементи`;
+  bindChips(L); bindChips(R);
+  updateControls(); // за „disabled“ визуелно
+}
+function bindChips(container){
+  container.querySelectorAll('.chip').forEach(ch=>{
+    ch.addEventListener('dragstart', ev=>{
+      ev.dataTransfer.setData('text/plain', JSON.stringify({
+        symbol: ch.dataset.symbol, name: ch.dataset.name,
+        atomic: ch.dataset.atomic, hazard: ch.dataset.hazard
+      }));
     });
-    
-    document.getElementById('element2-select').addEventListener('change', function() {
-        updateElementDisplay(this, 'element2-display', 'element2');
-        checkReactionReady();
+    ch.addEventListener('click', ()=>{
+      const el = ELEMENTS.find(e=>e.symbol===ch.dataset.symbol) || {
+        symbol: ch.dataset.symbol, element_name: ch.dataset.name, atomic_number: ch.dataset.atomic, hazard_type: ch.dataset.hazard
+      };
+      const target = !selected.e1 ? 'e1' : (!selected.e2 ? 'e2' : 'e1');
+      setSelected(target, el);
     });
-});
-
-function updateElementDisplay(select, displayId, elementKey) {
-    const display = document.getElementById(displayId);
-    const value = select.value;
-    const name = select.options[select.selectedIndex]?.dataset?.name || '';
-    
-    if (value) {
-        display.innerHTML = `
-            <div style="font-size: 36px; font-weight: bold; color: white;">${value}</div>
-            <div style="font-size: 12px; margin-top: 5px; color: white;">${name}</div>
-        `;
-        display.style.borderColor = '#28a745';
-        display.style.background = 'linear-gradient(45deg, #28a745, #20c997)';
-        
-        selectedElements[elementKey] = { symbol: value, name: name };
-    } else {
-        display.innerHTML = displayId === 'element1-display' ? 
-            '<span style="color: #666;">Избери<br>Елемент 1</span>' : 
-            '<span style="color: #666;">Избери<br>Елемент 2</span>';
-        display.style.borderColor = '#007bff';
-        display.style.background = '#f8f9fa';
-        
-        delete selectedElements[elementKey];
-    }
-    
-    // Ресетирај резултат кога се менуваат елементите
-    document.getElementById('result-area').style.display = 'none';
-    document.getElementById('participate-btn').style.display = 'none';
+  });
+}
+function applyFilter(inputId, listId){
+  const q = document.getElementById(inputId).value.trim().toLowerCase();
+  document.getElementById(listId).querySelectorAll('.chip').forEach(ch=>{
+    const hay = (ch.dataset.symbol+' '+ch.dataset.name).toLowerCase();
+    ch.style.display = hay.includes(q) ? 'inline-flex' : 'none';
+  });
 }
 
-function checkReactionReady() {
-    const reactBtn = document.getElementById('react-btn');
-    reactBtn.disabled = !(selectedElements.element1 && selectedElements.element2);
+/* ---------- Drop-зони ---------- */
+function bindDropZone(zoneId, key){
+  const dz = document.getElementById(zoneId);
+  dz.addEventListener('dragover', ev=>{ ev.preventDefault(); dz.classList.add('hover'); });
+  dz.addEventListener('dragleave', ()=> dz.classList.remove('hover'));
+  dz.addEventListener('drop', ev=>{
+    ev.preventDefault(); dz.classList.remove('hover');
+    try{
+      const d = JSON.parse(ev.dataTransfer.getData('text/plain'));
+      const el = ELEMENTS.find(e=>e.symbol===d.symbol) || {
+        symbol:d.symbol, element_name:d.name, atomic_number:d.atomic, hazard_type:d.hazard
+      };
+      setSelected(key, el);
+    }catch(_){}
+  });
+}
+function setSelected(key, el){
+  const other = key==='e1'?'e2':'e1';
+  if(selected[other] && selected[other].symbol===el.symbol){
+    alert('Не може ист елемент во двете полиња.'); return;
+  }
+  selected[key] = el;
+  document.getElementById(key==='e1'?'drop1':'drop2').innerHTML = pillHTML(el);
+  document.getElementById('selected-info').style.display = 'grid';
+  document.getElementById('info-e1').innerHTML = selected.e1 ? infoHTML(selected.e1) : '';
+  document.getElementById('info-e2').innerHTML = selected.e2 ? infoHTML(selected.e2) : '';
+  document.getElementById('selection-hint').innerText =
+    (selected.e1?selected.e1.symbol:'—') + ' + ' + (selected.e2?selected.e2.symbol:'—');
+  document.getElementById('result-area').style.display = 'none';
+  updateControls();
 }
 
-function simulateReaction() {
-    if (!selectedElements.element1 || !selectedElements.element2) return;
-    
-    const btn = document.getElementById('react-btn');
-    btn.innerHTML = '⏳ Проверувам...';
-    btn.disabled = true;
-    
-    // Повикај API за симулација на реакција
-    fetch('/api/simulate-reaction', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            element1: selectedElements.element1.symbol,
-            element2: selectedElements.element2.symbol
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        showResult(data);
-        btn.innerHTML = '⚗️ Реагирај';
-        btn.disabled = false;
-    })
-    .catch(error => {
-        console.error('Грешка:', error);
-        btn.innerHTML = '⚗️ Реагирај';
-        btn.disabled = false;
-        alert('Грешка при симулација на реакцијата');
+/* ---------- Контроли ---------- */
+function updateControls(){
+  const react = document.getElementById('react-btn');
+  const swap  = document.getElementById('swap-btn');
+  const clr   = document.getElementById('clear-btn');
+  const ready = !!(selected.e1 && selected.e2);
+  react.disabled = !ready; swap.disabled = !(selected.e1 || selected.e2); clr.disabled = !(selected.e1 || selected.e2);
+
+  document.querySelectorAll('.chip').forEach(ch=>{
+    const sym = ch.dataset.symbol;
+    const used = (selected.e1 && selected.e1.symbol===sym) || (selected.e2 && selected.e2.symbol===sym);
+    ch.dataset.disabled = used ? "1" : "0";
+  });
+}
+function swapSelected(){
+  const t = selected.e1; selected.e1 = selected.e2; selected.e2 = t;
+  document.getElementById('drop1').innerHTML = selected.e1 ? pillHTML(selected.e1) : `<div class="placeholder">Влечи тука<br><b>Елемент 1</b></div>`;
+  document.getElementById('drop2').innerHTML = selected.e2 ? pillHTML(selected.e2) : `<div class="placeholder">Влечи тука<br><b>Елемент 2</b></div>`;
+  document.getElementById('info-e1').innerHTML = selected.e1 ? infoHTML(selected.e1) : '';
+  document.getElementById('info-e2').innerHTML = selected.e2 ? infoHTML(selected.e2) : '';
+  document.getElementById('selection-hint').innerText =
+    (selected.e1?selected.e1.symbol:'—') + ' + ' + (selected.e2?selected.e2.symbol:'—');
+  document.getElementById('result-area').style.display = 'none';
+  updateControls();
+}
+function clearSelected(){
+  selected = {e1:null,e2:null};
+  document.getElementById('drop1').innerHTML = `<div class="placeholder">Влечи тука<br><b>Елемент 1</b></div>`;
+  document.getElementById('drop2').innerHTML = `<div class="placeholder">Влечи тука<br><b>Елемент 2</b></div>`;
+  document.getElementById('selected-info').style.display='none';
+  document.getElementById('selection-hint').innerText = 'Нема избрани елементи';
+  document.getElementById('result-area').style.display = 'none';
+  updateControls();
+}
+
+/* ---------- API ---------- */
+async function simulateReaction(){
+  if(!(selected.e1 && selected.e2)) return;
+  const btn = document.getElementById('react-btn');
+  btn.disabled = true; btn.innerText = '⏳ Проверувам...';
+  try{
+    const res = await fetch('/api/simulate-reaction',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ element1:selected.e1.symbol, element2:selected.e2.symbol })
     });
+    const data = await res.json();
+    showResult(data);
+  }catch(e){ console.error(e); alert('Грешка при симулација.'); }
+  finally{ btn.disabled=false; btn.innerText='⚗️ Реагирај'; }
 }
-
-function showResult(data) {
-    const resultArea = document.getElementById('result-area');
-    const resultCard = document.getElementById('result-card');
-    const resultContent = document.getElementById('result-content');
-    const participateBtn = document.getElementById('participate-btn');
-    
-    resultArea.style.display = 'block';
-    
-    if (data.success) {
-        currentReactionData = data;
-        
-        // За студенти - прикажи резултат и можност за учество во експеримент
-        resultCard.className = 'card border-success';
-        resultContent.innerHTML = `
-            <h4 class="text-success">✅ Успешна реакција!</h4>
-            <div style="font-size: 24px; font-weight: bold; margin: 20px 0; color: #28a745;">
-                ${selectedElements.element1.symbol} + ${selectedElements.element2.symbol} → ${data.product}
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <strong>Продукт:</strong> ${data.product}
-                </div>
-                <div class="col-md-6">
-                    <strong>Услови:</strong> ${data.conditions || 'Стандардни услови'}
-                </div>
-            </div>
-            <div class="alert alert-info mt-3">
-                <small>ℹ️ За да го зачувате овој резултат, запишете учество во експеримент</small>
-            </div>
-        `;
-        
-        // Прикажи копче за учество во експеримент
-        participateBtn.style.display = 'inline-block';
-        
-    } else {
-        currentReactionData = null;
-        resultCard.className = 'card border-warning';
-        resultContent.innerHTML = `
-            <h4 class="text-warning">⚠️ Реакцијата не е дефинирана</h4>
-            <p class="mb-3">${data.message}</p>
-            <div style="font-size: 18px; color: #856404; margin: 15px 0;">
-                ${selectedElements.element1.symbol} + ${selectedElements.element2.symbol} → ?
-            </div>
-            <div class="alert alert-warning">
-                <small>Оваа реакција сè уште не е додадена во системот. Контактирајте го вашиот професор.</small>
-            </div>
-        `;
-        participateBtn.style.display = 'none';
-    }
-}
-
-function participateInExperiment() {
-    if (!currentReactionData) return;
-    
-    const participateBtn = document.getElementById('participate-btn');
-    participateBtn.innerHTML = '⏳ Запишувам...';
-    participateBtn.disabled = true;
-    
-    // Зачувај учество во експеримент
-    fetch('/save-experiment', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            reaction_id: currentReactionData.reaction_id,
-            result: `Симулирана реакција: ${currentReactionData.elements} → ${currentReactionData.product}`,
-            safety_warning: 'Виртуелна симулација - безбедно извршено'
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            participateBtn.innerHTML = '✅ Успешно запишано!';
-            participateBtn.className = 'btn btn-success mt-3';
-            participateBtn.disabled = true;
-            
-            // Прикажи детали за експериментот
-            document.getElementById('experiment-details').style.display = 'block';
-            document.getElementById('experiment-details').innerHTML = `
-                <div class="alert alert-success">
-                    <h5>🎉 Успешно учество во експеримент!</h5>
-                    <p>Експеримент ID: #${data.experiment_id}</p>
-                    <p>Вашето учество е запишано. Можете да го видите во <a href="/my-experiments">Мои Експерименти</a></p>
-                </div>
-            `;
-            
-            // По 3 секунди ресетирај за нов експеримент
-            setTimeout(() => {
-                resetExperiment();
-            }, 5000);
-            
-        } else {
-            alert('Грешка при запишување: ' + (data.message || 'Непозната грешка'));
-            participateBtn.innerHTML = '📝 Запиши учество во експеримент';
-            participateBtn.disabled = false;
-        }
-    })
-    .catch(error => {
-        console.error('Грешка:', error);
-        alert('Грешка при запишување на учеството');
-        participateBtn.innerHTML = '📝 Запиши учество во експеримент';
-        participateBtn.disabled = false;
-    });
-}
-
-function resetExperiment() {
-    // Ресетирај селекција
-    document.getElementById('element1-select').value = '';
-    document.getElementById('element2-select').value = '';
-    
-    // Ресетирај приказ
-    document.getElementById('element1-display').innerHTML = '<span style="color: #666;">Избери<br>Елемент 1</span>';
-    document.getElementById('element1-display').style.borderColor = '#007bff';
-    document.getElementById('element1-display').style.background = '#f8f9fa';
-    
-    document.getElementById('element2-display').innerHTML = '<span style="color: #666;">Избери<br>Елемент 2</span>';
-    document.getElementById('element2-display').style.borderColor = '#007bff';
-    document.getElementById('element2-display').style.background = '#f8f9fa';
-    
-    // Скриј резултати
-    document.getElementById('result-area').style.display = 'none';
-    document.getElementById('participate-btn').style.display = 'none';
-    document.getElementById('experiment-details').style.display = 'none';
-    
-    // Ресетирај податоци
-    selectedElements = {};
+function showResult(data){
+  const area = document.getElementById('result-area');
+  const content = document.getElementById('result-content');
+  const participateBtn = document.getElementById('participate-btn');
+  area.style.display='block';
+  if(data.success){
+    currentReactionData = data;
+    content.innerHTML = `
+      <h4 class="text-success">✅ Успешна реакција!</h4>
+      <div class="result-eq pop">${selected.e1.symbol} + ${selected.e2.symbol} → <span>${data.product}</span></div>
+      <div class="row g-2 justify-content-center">
+        <div class="col-md-5"><div class="alert alert-success py-2 mb-2"><b>Продукт:</b> ${data.product}</div></div>
+        <div class="col-md-5"><div class="alert alert-info py-2 mb-2"><b>Услови:</b> ${data.conditions || 'Стандардни'}</div></div>
+      </div>
+      <small class="text-muted">ℹ️ За да се евидентира како активност, кликни „Запиши учество“.</small>`;
+    participateBtn.style.display='inline-block';
+  }else{
     currentReactionData = null;
-    
-    // Оневозможи копче за реакција
-    document.getElementById('react-btn').disabled = true;
+    content.innerHTML = `
+      <h4 class="text-warning">⚠️ Реакцијата не е дефинирана</h4>
+      <div class="result-eq pop">${selected.e1.symbol} + ${selected.e2.symbol} → ?</div>
+      <div class="alert alert-warning">Оваа комбинација не е додадена. Контактирај професор.</div>`;
+    participateBtn.style.display='none';
+  }
+  document.getElementById('experiment-details').style.display='none';
+  document.getElementById('experiment-details').innerHTML='';
 }
+async function participate(){
+  if(!currentReactionData) return;
+  const btn = document.getElementById('participate-btn');
+  btn.disabled=true; btn.innerText='⏳ Запишувам...';
+  try{
+    const res = await fetch('/save-experiment',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        reaction_id: currentReactionData.reaction_id,
+        result:`Симулирана реакција: ${selected.e1.symbol}+${selected.e2.symbol} → ${currentReactionData.product}`,
+        safety_warning:'Виртуелна симулација - безбедно извршено'
+      })
+    });
+    const data = await res.json();
+    if(data.success){
+      btn.classList.replace('btn-primary','btn-success');
+      btn.innerText='✅ Запишано!';
+      const det = document.getElementById('experiment-details');
+      det.style.display='block';
+      det.innerHTML = `<div class="alert alert-success">
+        <b>Експеримент ID:</b> #${data.experiment_id}<br/>
+        Гледај во <a href="/my-experiments">Мои Експерименти</a>.
+      </div>`;
+    }else{
+      alert('Грешка при запишување: '+(data.message||'Непозната грешка'));
+      btn.disabled=false; btn.innerText='📝 Запиши учество во експеримент';
+    }
+  }catch(e){
+    console.error(e); alert('Грешка при запишување.');
+    btn.disabled=false; btn.innerText='📝 Запиши учество во експеримент';
+  }
+}
+
+/* ---------- Init ---------- */
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderLists();
+  bindDropZone('drop1','e1'); bindDropZone('drop2','e2');
+
+  document.getElementById('filter-left').addEventListener('input', ()=>applyFilter('filter-left','list-left'));
+  document.getElementById('filter-right').addEventListener('input',()=>applyFilter('filter-right','list-right'));
+
+  document.getElementById('swap-btn').addEventListener('click', swapSelected);
+  document.getElementById('clear-btn').addEventListener('click', clearSelected);
+  document.getElementById('react-btn').addEventListener('click', simulateReaction);
+  document.getElementById('participate-btn').addEventListener('click', participate);
+
+  document.getElementById('cm-hazard').addEventListener('change', e=>{ if(e.target.checked){ colorMode='hazard'; renderLists(); }});
+  document.getElementById('cm-atomic').addEventListener('change', e=>{ if(e.target.checked){ colorMode='atomic'; renderLists(); }});
+});
 </script>
 {% endblock %}

@@ -2,128 +2,200 @@
 {% block title %}Сите експерименти{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h2>🧪 Сите експерименти во системот</h2>
-        <p class="text-muted">
-            {% if user_role == 'teacher' %}
-            Преглед на сите експерименти (професорски пристап)
-            {% else %}
-            Преглед на јавно достапни експерименти
-            {% endif %}
-        </p>
+<style>
+  .page-hero{background:linear-gradient(135deg,#232526,#414345);color:#fff;border-radius:18px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
+  .search-input{min-width:260px}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;margin:4px;border-radius:999px;background:#eef2ff;color:#3f51b5;font-weight:600;border:1px solid rgba(63,81,181,.25);user-select:none;font-size:.9rem;cursor:pointer}
+  .chip.active{background:#3f51b5;color:#fff}
+  .exp-card{border:0;border-radius:16px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+  .exp-card .card-header{background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;display:flex;justify-content:space-between;align-items:center}
+  .eq{font-weight:800;font-size:18px;background:#f8f9fa;border:1px solid #edf0f4;border-radius:12px;padding:10px 12px}
+  .empty{border:2px dashed #e9ecef;border-radius:16px;padding:24px;text-align:center;color:#6c757d}
+  .meta-badges{display:flex;gap:6px;flex-wrap:wrap}
+  .meta-badges .badge{border-radius:999px}
+  .showmore{border:0;background:#eef2ff;border-radius:10px;padding:6px 10px;font-weight:600}
+</style>
+
+<div class="page-hero">
+  <div>
+    <h2 class="mb-1">🧪 Сите експерименти</h2>
+    <div class="opacity-75">
+      {% if user_role == 'teacher' %}Професорски преглед{% else %}Јавно достапни{% endif %}
+      · Вкупно: <b>{{ experiments|length if experiments else 0 }}</b>
     </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/dashboard" class="btn btn-light btn-sm"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="/laboratory" class="btn btn-outline-light btn-sm"><i class="bi bi-flask"></i> Лабораторија</a>
+  </div>
 </div>
 
-{% if experiments %}
-<div class="row mt-3">
-    {% for experiment in experiments %}
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <span class="badge bg-primary">#{{ experiment.experiment_id }}</span>
-                    {{ experiment.element1_symbol }} + {{ experiment.element2_symbol }}
-                </h5>
-                <small class="text-muted">
-                    {{ experiment.time_stamp.strftime('%d.%m.%Y') if experiment.time_stamp }}
-                </small>
-            </div>
-            <div class="card-body">
-                <h6 class="card-title text-success">
-                    <strong>Продукт:</strong> {{ experiment.product }}
-                </h6>
-                
-                <div class="mb-3">
-                    <p class="mb-2">
-                        <strong>Реакција:</strong> 
-                        {{ experiment.element1_name }} + {{ experiment.element2_name }}
-                    </p>
-                    
-                    <p class="mb-2">
-                        <strong>Услови:</strong> 
-                        <span class="text-muted">{{ experiment.conditions or 'Стандардни услови' }}</span>
-                    </p>
-                    
-                    <p class="mb-2">
-                        <strong>Резултат:</strong> 
-                        <span class="text-muted">{{ experiment.result[:100] }}{% if experiment.result|length > 100 %}...{% endif %}</span>
-                    </p>
-                </div>
-                
-                {% if experiment.safety_warning %}
-                <div class="alert alert-warning py-2 mb-3">
-                    <small><strong>⚠️ Безбедност:</strong> {{ experiment.safety_warning }}</small>
-                </div>
-                {% endif %}
-                {% if experiment.equipment and experiment.equipment|length > 0 %}
-                    <p class="mb-2">
-                        <strong>Опрема:</strong>
-                    <ul class="small text-muted mb-0">
-                        {% for eq in experiment.equipment %}
-                        <li>
-                            {{ eq.equipment_name }}
-                            {% if eq.type %}<span class="text-secondary">({{ eq.type }})</span>{% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    </p>
-                    {% else %}
-                    <p class="mb-2">
-                        <strong>Опрема:</strong>
-                        <span class="text-muted">Нема евидентирана опрема</span>
-                    </p>
-                    {% endif %}
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">
-                        <strong>Креирано од:</strong> {{ experiment.created_by }}
-                    </small>
-                </div>
-            </div>
+{% if not experiments %}
+  <div class="empty mt-3">
+    Нема експерименти во системот.
+    {% if user_role == 'teacher' %}<div class="mt-2"><a href="/reactions/add" class="btn btn-primary btn-sm">Додај реакција</a></div>{% else %}
+    <div class="mt-2"><a href="/laboratory" class="btn btn-primary btn-sm">Отвори лабораторија</a></div>{% endif %}
+  </div>
+{% else %}
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="input-group search-input">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input id="search" class="form-control" placeholder="Пребарај по елемент/продукт/услов/опис...">
+    </div>
+    <select id="sort" class="form-select" style="max-width:220px">
+      <option value="id_desc">Најново (ID ↓)</option>
+      <option value="id_asc">Најстаро (ID ↑)</option>
+      <option value="prod_az">Продукт (A–Z)</option>
+      <option value="elem_az">Елементи (A–Z)</option>
+    </select>
+    <div class="ms-auto d-flex align-items-center flex-wrap" id="chips">
+      <!-- ќе се полни од JS -->
+    </div>
+  </div>
+
+  <!-- Grid -->
+  <div id="exp-grid" class="row">
+    {% for e in experiments %}
+    {% set has_eq = (e.equipment and e.equipment|length>0) %}
+    {% set has_warn = (e.safety_warning and e.safety_warning|length>0) %}
+    <div class="col-md-6 col-lg-4 mb-3 exp-item"
+         data-id="{{ e.experiment_id }}"
+         data-prod="{{ (e.product or '')|lower }}"
+         data-elems="{{ (e.element1_symbol ~ ' ' ~ e.element2_symbol ~ ' ' ~ e.element1_name ~ ' ' ~ e.element2_name)|lower }}"
+         data-conds="{{ (e.conditions or '')|lower }}"
+         data-text="{{ (e.result or '')|lower }}"
+         data-has-eq="{{ 1 if has_eq else 0 }}"
+         data-has-warn="{{ 1 if has_warn else 0 }}">
+      <div class="card exp-card h-100">
+        <div class="card-header">
+          <h5 class="mb-0 text-truncate">
+            <span class="badge bg-dark">#{{ e.experiment_id }}</span>
+            {{ e.element1_symbol }} + {{ e.element2_symbol }}
+          </h5>
+          <small class="text-truncate">
+            {% if e.time_stamp %}{{ e.time_stamp.strftime('%d.%m.%Y') }}{% endif %}
+          </small>
         </div>
+        <div class="card-body d-flex flex-column">
+          <div class="eq mb-3 text-center">
+            {{ e.element1_symbol }} + {{ e.element2_symbol }} → {{ e.product or '—' }}
+          </div>
+
+          <div class="meta-badges mb-2">
+            {% if has_eq %}<span class="badge text-bg-primary"><i class="bi bi-tools"></i> Опрема</span>{% endif %}
+            {% if has_warn %}<span class="badge text-bg-warning"><i class="bi bi-exclamation-triangle"></i> Предупредување</span>{% endif %}
+          </div>
+
+          <ul class="small list-unstyled mb-2">
+            <li><b>Реакција:</b> {{ e.element1_name }} + {{ e.element2_name }}</li>
+            <li><b>Услови:</b> {{ e.conditions or 'Стандардни услови' }}</li>
+          </ul>
+
+          {% if e.result %}
+          <div class="mb-2">
+            <b>Резултат:</b>
+            <div class="text-muted" id="res-{{e.experiment_id}}">
+              {{ e.result[:140] }}{% if e.result|length>140 %}…{% endif %}
+            </div>
+          </div>
+          {% endif %}
+
+          {% if has_eq %}
+          <div class="mt-2">
+            <b>Опрема:</b>
+            <ul class="small text-muted mb-0">
+              {% for q in e.equipment %}
+              <li>{{ q.equipment_name }}{% if q.type %} <span class="text-secondary">({{ q.type }})</span>{% endif %}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          {% if has_warn %}
+          <div class="alert alert-warning py-2 px-3 mt-2">
+            <small><b>⚠ Безбедност:</b> {{ e.safety_warning }}</small>
+          </div>
+          {% endif %}
+
+          <div class="mt-auto d-flex justify-content-between align-items-center">
+            <small class="text-muted"><b>Креирано од:</b> {{ e.created_by }}</small>
+            {% if e.result and e.result|length>140 %}
+              <button class="showmore" onclick="toggleMore({{e.experiment_id}})">Повеќе</button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
     </div>
     {% endfor %}
-</div>
-
-<!-- Пагинација (ако има многу експерименти) -->
-{% if experiments|length > 12 %}
-<nav aria-label="Page navigation">
-    <ul class="pagination justify-content-center">
-        <li class="page-item disabled">
-            <a class="page-link" href="#" tabindex="-1">Previous</a>
-        </li>
-        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-        <li class="page-item"><a class="page-link" href="#">2</a></li>
-        <li class="page-item"><a class="page-link" href="#">3</a></li>
-        <li class="page-item">
-            <a class="page-link" href="#">Next</a>
-        </li>
-    </ul>
-</nav>
+  </div>
 {% endif %}
 
-{% else %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="alert alert-info text-center">
-            <h4>Нема експерименти во системот</h4>
-            {% if user_role == 'teacher' %}
-            <p>Започнете со креирање на реакции и експерименти.</p>
-            <a href="/reactions/add" class="btn btn-primary">Додај реакција</a>
-            {% else %}
-            <p>Сè уште нема извршени експерименти. Бидете први!</p>
-            <a href="/laboratory" class="btn btn-primary">Отвори лабораторија</a>
-            {% endif %}
-        </div>
-    </div>
+<div class="mt-3 text-center">
+  <a href="/dashboard" class="btn btn-secondary">🏠 Dashboard</a>
+  <a href="/laboratory" class="btn btn-success">🔬 Лабораторија</a>
+  {% if user_role == 'teacher' %}<a href="/reactions" class="btn btn-info">⚗️ Реакции</a>{% endif %}
 </div>
-{% endif %}
 
-<div class="mt-4 text-center">
-    <a href="/dashboard" class="btn btn-secondary">🏠 Dashboard</a>
-    <a href="/laboratory" class="btn btn-success">🔬 Лабораторија</a>
-    {% if user_role == 'teacher' %}
-    <a href="/reactions" class="btn btn-info">⚗️ Реакции</a>
-    {% endif %}
-</div>
+<script>
+  // Toggle long result text
+  function toggleMore(id){
+    const el=document.getElementById('res-'+id);
+    if(!el) return;
+    el.classList.toggle('expanded');
+    // прост toggle – ако сакаш, можеш да чуваш full текст во data-attr и да го заменаваш
+  }
+
+  const items=[...document.querySelectorAll('.exp-item')];
+  const search=document.getElementById('search');
+  const sortSel=document.getElementById('sort');
+  const chips=document.getElementById('chips');
+
+  // Чипови: Има опрема / Со предупредување
+  const filters = { eq:null, warn:null }; // null=all, 1=only yes, 0=only no
+  function addChip(label,key,val){
+    const c=document.createElement('button'); c.type='button'; c.className='chip'; c.textContent=label;
+    c.addEventListener('click', ()=>{
+      // циклус: null -> 1 -> 0 -> null
+      if(filters[key]===null) { filters[key]=1; c.classList.add('active'); c.textContent=label+' ✓'; }
+      else if(filters[key]===1){ filters[key]=0; c.classList.remove('active'); c.textContent=label+' ✕'; }
+      else { filters[key]=null; c.textContent=label; }
+      applyFilters();
+    });
+    chips.appendChild(c);
+  }
+  addChip('Има опрема','eq');
+  addChip('Предупредување','warn');
+
+  function applyFilters(){
+    const q=(search?.value||'').toLowerCase().trim();
+    items.forEach(it=>{
+      const text = [it.dataset.prod,it.dataset.elems,it.dataset.conds,it.dataset.text].join(' ');
+      const okText = text.includes(q);
+      const okEq   = (filters.eq===null)   || (+it.dataset.hasEq===filters.eq);
+      const okWarn = (filters.warn===null) || (+it.dataset.hasWarn===filters.warn);
+      it.style.display = (okText && okEq && okWarn) ? '' : 'none';
+    });
+  }
+  function applySort(){
+    const val=sortSel.value;
+    const grid=document.getElementById('exp-grid');
+    const sorted=[...items].sort((a,b)=>{
+      const ai=+a.dataset.id, bi=+b.dataset.id;
+      const ap=a.dataset.prod, bp=b.dataset.prod;
+      const ae=a.dataset.elems, be=b.dataset.elems;
+      if(val==='id_desc') return bi-ai;
+      if(val==='id_asc')  return ai-bi;
+      if(val==='prod_az') return ap.localeCompare(bp,'mk');
+      if(val==='elem_az') return ae.localeCompare(be,'mk');
+      return 0;
+    });
+    sorted.forEach(el=>grid.appendChild(el));
+  }
+
+  search?.addEventListener('input', applyFilters);
+  sortSel?.addEventListener('change', applySort);
+  applySort();
+</script>
 {% endblock %}

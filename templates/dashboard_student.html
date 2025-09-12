@@ -1,79 +1,148 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - Студент{% endblock %}
+{% block title %}Dashboard · Студент{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h2>Добредојде, {{ user_name }}!</h2>
-        <p class="lead">Студентска контролна табла</p>
+<style>
+  :root{
+    --grad-1: linear-gradient(135deg,#6a11cb 0%,#2575fc 100%);
+    --grad-2: linear-gradient(135deg,#00c6ff 0%,#0072ff 100%);
+    --grad-3: linear-gradient(135deg,#f7971e 0%,#ffd200 100%);
+    --grad-4: linear-gradient(135deg,#11998e 0%,#38ef7d 100%);
+  }
+  .hero{
+    background: var(--grad-1); color:#fff; border-radius:18px; padding:24px 28px;
+    box-shadow:0 14px 30px rgba(37,117,252,.25);
+  }
+  .stat-card{
+    border:0; border-radius:16px; color:#fff; overflow:hidden;
+    box-shadow:0 12px 28px rgba(0,0,0,.12);
+  }
+  .stat-card .card-body{padding:18px 18px 16px}
+  .stat-card h2{font-weight:800; margin:0}
+  .hover-lift{transition:transform .15s ease, box-shadow .15s ease}
+  .hover-lift:hover{transform:translateY(-2px); box-shadow:0 16px 34px rgba(0,0,0,.12)}
+  .list-clean .list-group-item{border:0; padding:.6rem .75rem}
+</style>
+
+<div class="hero mb-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <h2 class="mb-1">Добредојде, {{ user_name }} 👋</h2>
+      <div class="opacity-75">Студентска контролна табла · брз пристап до лабораторија, елементи и твои активности</div>
     </div>
+    <div>
+      <a href="/laboratory" class="btn btn-light btn-lg fw-semibold shadow-sm">
+        ⚗️ Отвори виртуелна лабораторија
+      </a>
+    </div>
+  </div>
 </div>
 
-<!-- Главни картички -->
-<div class="row mt-4">
-    <div class="col-md-4 mb-3">
-        <div class="card h-100">
-            <div class="card-header bg-primary text-white">
-                <h5><i class="bi bi-flask"></i> Хемиски елементи</h5>
-            </div>
-            <div class="card-body">
-                <p>Истражете ги достапните хемиски елементи и нивните својства</p>
-                <a href="/elements" class="btn btn-primary">Прегледај елементи</a>
-            </div>
-        </div>
+<!-- STAT cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card hover-lift" style="background:var(--grad-2)">
+      <div class="card-body">
+        <div class="small opacity-75">Мои експерименти</div>
+        <h2 class="count-up" data-target="{{ stats.experiment_count or 0 }}">0</h2>
+      </div>
     </div>
-    
-    <div class="col-md-4 mb-3">
-        <div class="card h-100">
-            <div class="card-header bg-success text-white">
-                <h5><i class="bi bi-tools"></i> Лабораториска опрема</h5>
-            </div>
-            <div class="card-body">
-                <p>Запознајте се со достапната лабораториска опрема</p>
-                <a href="/equipment" class="btn btn-success">Прегледај опрема</a>
-            </div>
-        </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card hover-lift" style="background:var(--grad-4)">
+      <div class="card-body">
+        <div class="small opacity-75">Различни реакции</div>
+        <h2 class="count-up" data-target="{{ stats.reaction_count or 0 }}">0</h2>
+      </div>
     </div>
-    
-    <div class="col-md-4 mb-3">
-        <div class="card h-100">
-            <div class="card-header bg-danger text-white">
-                <h5><i class="bi bi-radioactive"></i> Виртуелна лабораторија</h5>
-            </div>
-            <div class="card-body">
-                <p>Симулирајте хемиски реакции и учествувајте во експерименти</p>
-                <a href="/laboratory" class="btn btn-danger">Отвори лабораторија</a>
-            </div>
-        </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card hover-lift" style="background:var(--grad-3)">
+      <div class="card-body">
+        <div class="small opacity-75">Прегледани елементи</div>
+        <h2 class="count-up" data-target="{{ stats.element_count or 0 }}">0</h2>
+      </div>
     </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card hover-lift" style="background:linear-gradient(135deg,#ff512f,#dd2476)">
+      <div class="card-body">
+        <div class="small opacity-75">Прегледана опрема</div>
+        <h2 class="count-up" data-target="{{ stats.equipment_count or 0 }}">0</h2>
+      </div>
+    </div>
+  </div>
+</div>
+<br>
+<br>
+<!-- Quick sections -->
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card h-100 hover-lift">
+      <div class="card-header bg-primary text-white"><i class="bi bi-flask"></i> Хемиски елементи</div>
+      <div class="card-body">
+        <p>Истражи својства и безбедносни информации.</p>
+        <a href="/elements" class="btn btn-primary">Прегледај елементи</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100 hover-lift">
+      <div class="card-header bg-success text-white"><i class="bi bi-tools"></i> Лабораториска опрема</div>
+      <div class="card-body">
+        <p>Провери упатства и безбедносни препораки.</p>
+        <a href="/equipment" class="btn btn-success">Прегледај опрема</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100 hover-lift">
+      <div class="card-header bg-danger text-white"><i class="bi bi-radioactive"></i> Виртуелна лабораторија</div>
+      <div class="card-body">
+        <p>Влечи 2 елементи и симулирај реакција.</p>
+        <a href="/laboratory" class="btn btn-danger">Отвори лабораторија</a>
+      </div>
+    </div>
+  </div>
+</div>
+<br>
+<br>
+<div class="row g-3 mt-1">
+  <div class="col-lg-6">
+    <div class="card h-100 hover-lift">
+      <div class="card-header bg-warning text-dark"><i class="bi bi-journal-text"></i> Мои експерименти</div>
+      <div class="card-body">
+        <p>Историја на учества и резултати од експерименти.</p>
+        <a href="/my-experiments" class="btn btn-warning">Отвори листа</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100 hover-lift">
+      <div class="card-header text-white" style="background:linear-gradient(135deg,#667eea,#764ba2)"><i class="bi bi-graph-up"></i> Мој напредок</div>
+      <div class="card-body">
+        <ul class="list-group list-clean">
+          <li class="list-group-item"><i class="bi bi-check-circle text-success me-1"></i> Експерименти: <b>{{ stats.experiment_count or 0 }}</b></li>
+          <li class="list-group-item"><i class="bi bi-check-circle text-success me-1"></i> Реакции: <b>{{ stats.reaction_count or 0 }}</b></li>
+          <li class="list-group-item"><i class="bi bi-check-circle text-success me-1"></i> Елементи видени: <b>{{ stats.element_count or 0 }}</b></li>
+        </ul>
+        <a href="/my-experiments" class="btn btn-outline-light mt-2">Види детално</a>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Втор ред картички -->
-<div class="row">
-    <div class="col-md-4 mb-3">
-        <div class="card h-100">
-            <div class="card-header bg-warning text-dark">
-                <h5><i class="bi bi-journal-text"></i> Мои експерименти</h5>
-            </div>
-            <div class="card-body">
-                <p>Прегледајте ги експериментите во кои сте учествувале</p>
-                <a href="/my-experiments" class="btn btn-warning">Види експерименти</a>
-            </div>
-        </div>
-    </div>
-    
-    
-    
-    <div class="col-md-4 mb-3">
-        <div class="card h-100">
-            <div class="card-header text-white" style="background: linear-gradient(45deg, #667eea, #764ba2);">
-                <h5><i class="bi bi-graph-up"></i> Мој напредок</h5>
-            </div>
-            <div class="card-body">
-                <p>Следете го вашиот напредок и активности</p>
-                <a href="/my-experiments" class="btn btn-secondary">Види напредок</a>
-            </div>
-        </div>
-    </div>
-</div>
+<script>
+// мал „count-up“ ефект за бројките
+document.querySelectorAll('.count-up').forEach(el=>{
+  const target = Number(el.dataset.target||0);
+  const dur = 600; const start = performance.now();
+  const step = t=>{
+    const p = Math.min(1,(t-start)/dur);
+    el.textContent = Math.round(target * p);
+    if(p<1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+});
+</script>
 {% endblock %}

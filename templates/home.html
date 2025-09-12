@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}SIMLAB — Виртуелна лабораторија{% endblock %}
+
+{% block content %}
+<style>
+  .hero{
+    background: linear-gradient(135deg,#232526,#414345);
+    color:#fff;border-radius:18px;padding:22px 24px;margin-bottom:18px;
+    display:flex;align-items:center;justify-content:space-between;gap:14px
+  }
+  .hero .kicker{opacity:.85;font-size:.95rem}
+  .hero .cta-wrap{display:flex;gap:10px;flex-wrap:wrap}
+  .soft{
+    background:#ffffff;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.06);
+    border:0
+  }
+  .feature-card .card-header{
+    background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;border:0
+  }
+  .feature-card .iconbox{
+    width:42px;height:42px;border-radius:12px;background:#ffffff22;
+    display:flex;align-items:center;justify-content:center
+  }
+  .muted{color:#6c757d}
+  .quick{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px
+  }
+  @media (max-width: 992px){ .quick{grid-template-columns:1fr} }
+  .pill-link{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:999px;
+    border:1px solid #e9ecef;background:#f8fafc;font-weight:600;text-decoration:none
+  }
+  .pill-link:hover{background:#eef2ff;border-color:#dfe4ff}
+</style>
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <div class="kicker">🧪 SIMLAB — Виртуелна хемиска лабораторија</div>
+    <h2 class="mb-1">Учете, симулирајте и анализирајте реакции</h2>
+    <div class="opacity-75">Безбедно окружење за студенти и професори со реални податоци и извештаи</div>
+  </div>
+
+  <div class="cta-wrap">
+    {% if is_logged %}
+      <a href="/dashboard" class="btn btn-light fw-semibold">
+        <i class="bi bi-speedometer2"></i> Оди на Dashboard
+      </a>
+    {% else %}
+      <a href="/login" class="btn btn-light fw-semibold">
+        <i class="bi bi-box-arrow-in-right"></i> Најава
+      </a>
+      <a href="/register" class="btn btn-outline-light">
+        <i class="bi bi-person-plus"></i> Регистрација
+      </a>
+    {% endif %}
+    <button id="db-check" class="btn btn-ghost btn-sm" style="border:1px solid #ffffff55;color:#fff">
+      <i class="bi bi-activity"></i> Провери база
+    </button>
+  </div>
+</div>
+
+<!-- КЛУЧНИ ПАТЕКИ -->
+<div class="row g-3">
+  <!-- Елементи -->
+  <div class="col-md-4">
+    <div class="card soft feature-card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+          <div class="iconbox"><i class="bi bi-flask"></i></div>
+          <h5 class="mb-0">Хемиски елементи</h5>
+        </div>
+        {% if role == 'teacher' %}
+          <a href="/elements/add" class="btn btn-light btn-sm fw-semibold"><i class="bi bi-plus-circle"></i></a>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <p class="muted">Прелистајте ги елементите и нивните својства.</p>
+        <a href="/elements" class="btn btn-outline-primary">
+          <i class="bi bi-search"></i> Прегледај елементи
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Опрема -->
+  <div class="col-md-4">
+    <div class="card soft feature-card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between" style="background:linear-gradient(135deg,#11998e,#38ef7d)">
+        <div class="d-flex align-items-center gap-2">
+          <div class="iconbox"><i class="bi bi-tools"></i></div>
+          <h5 class="mb-0">Лабораториска опрема</h5>
+        </div>
+        {% if role == 'teacher' %}
+          <a href="/equipment/add" class="btn btn-light btn-sm fw-semibold"><i class="bi bi-plus-circle"></i></a>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <p class="muted">Каталог на опрема со безбедносни насоки.</p>
+        <a href="/equipment" class="btn btn-outline-success">
+          <i class="bi bi-wrench"></i> Прегледај опрема
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Лабораторија -->
+  <div class="col-md-4">
+    <div class="card soft feature-card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between" style="background:linear-gradient(135deg,#ee0979,#ff6a00)">
+        <div class="d-flex align-items-center gap-2">
+          <div class="iconbox"><i class="bi bi-radioactive"></i></div>
+          <h5 class="mb-0">Виртуелна лабораторија</h5>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="muted">Симулирај реакции со drag-and-drop и евидентирај експерименти.</p>
+        <a href="/laboratory" class="btn btn-outline-danger">
+          <i class="bi bi-flask"></i> Отвори лабораторија
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Брзи врски / контекст по улога -->
+<div class="card soft mt-3">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div class="fw-bold"><i class="bi bi-lightning"></i> Брзи врски</div>
+      <div class="quick">
+        {% if role == 'teacher' %}
+          <a class="pill-link" href="/reactions"><i class="bi bi-diagram-3"></i> Реакции</a>
+          <a class="pill-link" href="/reports"><i class="bi bi-bar-chart"></i> Извештаи</a>
+          <a class="pill-link" href="/my_students"><i class="bi bi-people"></i> Мои студенти</a>
+        {% elif role == 'student' %}
+          <a class="pill-link" href="/my-experiments"><i class="bi bi-journal-text"></i> Мои експерименти</a>
+          <a class="pill-link" href="/elements"><i class="bi bi-flask"></i> Елементи</a>
+          <a class="pill-link" href="/laboratory"><i class="bi bi-radioactive"></i> Лабораторија</a>
+        {% else %}
+          <a class="pill-link" href="/elements"><i class="bi bi-flask"></i> Елементи</a>
+          <a class="pill-link" href="/equipment"><i class="bi bi-tools"></i> Опрема</a>
+          <a class="pill-link" href="/reports"><i class="bi bi-bar-chart"></i> Извештаи</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Инфо секција -->
+<div class="row g-3 mt-3">
+  <div class="col-lg-7">
+    <div class="card soft">
+      <div class="card-body">
+        <h5 class="mb-2"><i class="bi bi-info-circle"></i> Што нуди SIMLAB?</h5>
+        <ul class="mb-0 muted">
+          <li>Каталог на елементи и лабораториска опрема.</li>
+          <li>Визуелна симулација на реакции со евиденција на експерименти.</li>
+          <li>Извештаи за активност/опрема/популарност на елементи.</li>
+          <li>Различни улоги: професор/студент со прилагодени алатки.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card soft">
+      <div class="card-body">
+        <h6 class="mb-2"><i class="bi bi-broadcast-pin"></i> Состојба на систем</h6>
+        <div id="db-status" class="small muted">Базата: <em>непроверено</em></div>
+        <div id="db-msg" class="mt-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Лесен health-check кон /test-db (истиот што веќе го имаш)
+  const btn = document.getElementById('db-check');
+  const status = document.getElementById('db-status');
+  const msg = document.getElementById('db-msg');
+  if(btn){
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Проверувам...';
+      try{
+        const res = await fetch('/test-db');
+        const data = await res.json();
+        if(data.status === 'success'){
+          status.innerHTML = 'Базата: <span class="text-success fw-semibold">онлајн</span>';
+          msg.innerHTML = '<div class="alert alert-success py-2 my-2"><i class="bi bi-check-circle"></i> ' + (data.message||'') + '</div>';
+        }else{
+          status.innerHTML = 'Базата: <span class="text-danger fw-semibold">проблем</span>';
+          msg.innerHTML = '<div class="alert alert-danger py-2 my-2"><i class="bi bi-x-octagon"></i> ' + (data.message||'') + '</div>';
+        }
+      }catch(e){
+        status.innerHTML = 'Базата: <span class="text-danger fw-semibold">недостапна</span>';
+        msg.innerHTML = '<div class="alert alert-danger py-2 my-2">Исклучок: ' + e + '</div>';
+      }finally{
+        btn.disabled = false; btn.innerHTML = '<i class="bi bi-activity"></i> Провери база';
+      }
+    });
+  }
+</script>
+{% endblock %}
