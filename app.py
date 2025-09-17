@@ -55,8 +55,6 @@ def index():
         role=session.get('role')  # 'student' или 'teacher'
     )
 
-
-
 @app.route('/test-db')
 def test_db():
     if DatabaseManager.test_connection():
@@ -80,7 +78,7 @@ def users():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email'].strip()
+        email = (request.form['email'] or '').strip().lower()  # normalize
         password = request.form['password']
         user = DatabaseManager.authenticate_user(email, password)
         if user and AuthManager.verify_password(password, user['password']):
@@ -91,34 +89,40 @@ def login():
         return render_template('login.html', error='Погрешен email или лозинка')
     return render_template('login.html')
 
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     teachers = DatabaseManager.get_all_teachers()
     if request.method == 'POST':
-        name = request.form['name']
-        surname = request.form['surname']
-        email = request.form['email']
+        name     = (request.form['name'] or '').strip()
+        surname  = (request.form['surname'] or '').strip()
+        email    = (request.form['email'] or '').strip().lower()  # normalize
         password = request.form['password']
-        role = request.form['role']
-        teacher_id = request.form.get('teacher_id') if role == 'student' else None
+        role     = request.form['role']
+        # студент мора да избере наставник (server-side валидација)
+        teacher_id = None
+        if role == 'student':
+            raw_tid = (request.form.get('teacher_id') or '').strip()
+            if not raw_tid:
+                return render_template('register.html', error='Избери наставник.', teachers=teachers)
+            try:
+                teacher_id = int(raw_tid)
+            except ValueError:
+                return render_template('register.html', error='Невалиден наставник.', teachers=teachers)
+
         password_hash = AuthManager.hash_password(password)
         user_id = DatabaseManager.register_user(name, surname, email, password_hash, role, teacher_id)
         if user_id:
             return redirect(url_for('login'))
-        return render_template('register.html', error='Грешка при регистрација', teachers=teachers)
-    return render_template('register.html', teachers=teachers)
+        # ако паднало на UNIQUE(email) ќе врати None → прикажи френдли порака
+        return render_template('register.html', error='Овој email веќе постои.', teachers=teachers)
 
+    return render_template('register.html', teachers=teachers)
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
-
-# ------------------------------
-# Dashboard
-# ------------------------------
 @app.route('/dashboard')
 @require_login()
 def dashboard():
@@ -408,57 +412,73 @@ def laboratory():
     return render_template('virtual_laboratory.html', elements=elements, user_role=session['role'])
 
 
+def _to_element_id(v):
+    # пробај како int
+    try:
+        return int(v)
+    except Exception:
+        pass
+    # fallback: симбол/име -> id
+    row = DatabaseManager.execute_query("""
+        SELECT element_id
+        FROM elements
+        WHERE UPPER(symbol)=UPPER(%s) OR UPPER(element_name)=UPPER(%s)
+        LIMIT 1
+    """, (v, v)) or []
+    return row[0]['element_id'] if row else None
+
 @app.route('/api/simulate-reaction', methods=['POST'])
 @require_login()
 def simulate_reaction():
     try:
         data = request.get_json(silent=True) or {}
-        element1_symbol = (data.get('element1') or '').strip()
-        element2_symbol = (data.get('element2') or '').strip()
-        if not element1_symbol or not element2_symbol:
-            return jsonify({'success': False, 'message': 'Недостигаат параметри (element1/element2)'}), 400
+        e1 = _to_element_id(data.get('element1_id') or data.get('element1'))
+        e2 = _to_element_id(data.get('element2_id') or data.get('element2'))
+        if not e1 or not e2:
+            return jsonify({'success': False, 'message': 'Недостигаат валидни element_id вредности.'}), 400
 
-        reactions = DatabaseManager.get_all_reactions() or []
-        for reaction in reactions:
-            if ((reaction['element1_symbol'] == element1_symbol and reaction['element2_symbol'] == element2_symbol) or
-                (reaction['element1_symbol'] == element2_symbol and reaction['element2_symbol'] == element1_symbol)):
-                experiment = DatabaseManager.get_experiment_by_reaction(reaction['reaction_id'])
-                return jsonify({
-                    'success': True,
-                    'product': reaction['product'],
-                    'conditions': reaction.get('conditions'),
-                    'reaction_id': reaction['reaction_id'],
-                    'experiment_id': experiment['experiment_id'] if experiment else None,
-                    'elements': f"{reaction['element1_name']} + {reaction['element2_name']}"
-                }), 200
+        rx = DatabaseManager.get_reaction_by_element_ids(e1, e2)
+        if not rx:
+            return jsonify({'success': False, 'message': 'Реакцијата не е дефинирана во системот.'}), 200
+
+        rx_full = DatabaseManager.get_reaction_by_id(rx['reaction_id']) or {}
+        exp     = DatabaseManager.get_experiment_by_reaction(rx['reaction_id'])
 
         return jsonify({
-            'success': False,
-            'message': f'Реакцијата меѓу {element1_symbol} и {element2_symbol} не е дефинирана во системот.'
+            'success': True,
+            'product': rx.get('product'),
+            'conditions': rx.get('conditions'),
+            'reaction_id': rx['reaction_id'],
+            'experiment_id': exp['experiment_id'] if exp else None,
+            'elements': f"{rx_full.get('element1_name','')} + {rx_full.get('element2_name','')}"
         }), 200
     except Exception as e:
         app.logger.exception("simulate_reaction failed")
         return jsonify({'success': False, 'message': f'Серверска грешка: {str(e)}'}), 500
 
-
 @app.route('/api/check-reaction', methods=['POST'])
 @require_login()
 def check_reaction():
-    data = request.get_json() or {}
-    element1_symbol = data.get('element1')
-    element2_symbol = data.get('element2')
-    reactions = DatabaseManager.get_all_reactions() or []
-    for reaction in reactions:
-        if ((reaction['element1_symbol'] == element1_symbol and reaction['element2_symbol'] == element2_symbol) or
-            (reaction['element1_symbol'] == element2_symbol and reaction['element2_symbol'] == element1_symbol)):
-            return jsonify({
-                'success': True,
-                'product': reaction['product'],
-                'conditions': reaction['conditions'],
-                'reaction_id': reaction['reaction_id']
-            })
-    return jsonify({'success': False, 'message': 'Реакцијата не е дефинирана во системот'})
+    try:
+        data = request.get_json(silent=True) or {}
+        e1 = _to_element_id(data.get('element1_id') or data.get('element1'))
+        e2 = _to_element_id(data.get('element2_id') or data.get('element2'))
+        if not e1 or not e2:
+            return jsonify({'success': False, 'message': 'Недостигаат валидни element_id вредности.'}), 400
 
+        rx = DatabaseManager.get_reaction_by_element_ids(e1, e2)
+        if not rx:
+            return jsonify({'success': False, 'message': 'Реакцијата не е дефинирана во системот.'}), 200
+
+        return jsonify({
+            'success': True,
+            'product': rx['product'],
+            'conditions': rx['conditions'],
+            'reaction_id': rx['reaction_id']
+        }), 200
+    except Exception as e:
+        app.logger.exception("check_reaction failed")
+        return jsonify({'success': False, 'message': f'Серверска грешка: {str(e)}'}), 500
 
 @app.route('/save-experiment', methods=['POST'])
 @require_login()
@@ -466,14 +486,21 @@ def save_experiment():
     data = request.get_json() or {}
     reaction_id = data.get('reaction_id')
     experiment = DatabaseManager.get_experiment_by_reaction(reaction_id)
+
     if not experiment:
         if session['role'] != 'teacher':
             return jsonify({'success': False, 'message': 'Не постои експеримент за оваа реакција. Контактирајте го вашиот професор.'})
+
         result_description = data.get('result', 'Експериментална симулација')
-        safety_warning = data.get('safety_warning', 'Стандардни безбедносни мерки')
-        experiment_id = DatabaseManager.insert_experiment(session['user_id'], reaction_id, result_description, safety_warning)
+        # важно: ако нема вредност, испрати None → тригерот ќе пополни
+        safety_warning = (data.get('safety_warning') or '').strip() or None
+
+        experiment_id = DatabaseManager.insert_experiment(
+            session['user_id'], reaction_id, result_description, safety_warning
+        )
     else:
         experiment_id = experiment['experiment_id']
+
     if experiment_id:
         DatabaseManager.track_experiment_participation(session['user_id'], experiment_id)
         return jsonify({'success': True, 'experiment_id': experiment_id})

@@ -3,6 +3,14 @@ import os, logging
 from contextlib import contextmanager
 import psycopg2
 from psycopg2.extras import RealDictCursor, execute_values
+from psycopg2 import errors as pg_errors
+
+
+def _norm_symbol(s: str) -> str:
+    return (s or "").strip().upper()
+
+def _null_if_blank(s: str | None):
+    return None if s is None or (isinstance(s, str) and s.strip() == "") else s
 
 log = logging.getLogger("simlab.db")
 class DatabaseManager:
@@ -73,7 +81,7 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
     def register_user(name, surname, email, password_hash, role, teacher_id=None):
         try:
             with _conn_cur() as cur:
-                # User
+                # норма: сними email каков што е внесен (ако сакаш – .lower())
                 cur.execute(
                     'INSERT INTO "User" (user_name, user_surname, email, password, role) '
                     'VALUES (%s, %s, %s, %s, %s) RETURNING user_id',
@@ -81,7 +89,6 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
                 )
                 user_id = cur.fetchone()['user_id']
 
-                # Subtype
                 if role == 'student' and teacher_id:
                     cur.execute(
                         'INSERT INTO student (student_id, teacher_id) VALUES (%s, %s)',
@@ -91,9 +98,13 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
                     cur.execute('INSERT INTO teacher (teacher_id) VALUES (%s)', (user_id,))
 
                 return user_id
+        except pg_errors.UniqueViolation:
+            log.warning("register_user: email already exists (%s)", email)
+            return None
         except Exception:
             log.exception("register_user failed (email=%s, role=%s)", email, role)
             return None
+
 
     @staticmethod
     def get_user_by_id(user_id):
@@ -157,13 +168,20 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
     def add_element(symbol, name, atomic_number, atomic_weight, melting_point, boiling_point, hazard_type, description, teacher_id):
         try:
             with _conn_cur() as cur:
+                symbol = _norm_symbol(symbol)
                 cur.execute('''
                     INSERT INTO elements (symbol, element_name, atomic_number, atomic_weight, 
-                                          melting_point, boiling_point, hazard_type, description_element, teacher_id)
+                                        melting_point, boiling_point, hazard_type, description_element, teacher_id)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING element_id
                 ''', (symbol, name, atomic_number, atomic_weight, melting_point, boiling_point, hazard_type, description, teacher_id))
                 return cur.fetchone()['element_id']
+        except pg_errors.UniqueViolation:
+            log.warning("add_element: symbol already exists (%s)", symbol)
+            return None
+        except pg_errors.CheckViolation:
+            log.warning("add_element: physical constraint violation (Z>0, mass>0, melting<boiling)")
+            return None
         except Exception:
             log.exception("add_element failed (symbol=%s, name=%s)", symbol, name)
             return None
@@ -172,6 +190,7 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
     def update_element(element_id, symbol, name, atomic_number, atomic_weight, melting_point, boiling_point, hazard_type, description):
         try:
             with _conn_cur() as cur:
+                symbol = _norm_symbol(symbol)
                 cur.execute('''
                     UPDATE elements 
                     SET symbol = %s, element_name = %s, atomic_number = %s, atomic_weight = %s, 
@@ -179,6 +198,12 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
                     WHERE element_id = %s
                 ''', (symbol, name, atomic_number, atomic_weight, melting_point, boiling_point, hazard_type, description, element_id))
                 return True
+        except pg_errors.UniqueViolation:
+            log.warning("update_element: symbol already exists (%s)", symbol)
+            return False
+        except pg_errors.CheckViolation:
+            log.warning("update_element: physical constraint violation")
+            return False
         except Exception:
             log.exception("update_element failed (element_id=%s)", element_id)
             return False
@@ -224,6 +249,9 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
                     RETURNING equipment_id
                 ''', (name, equipment_type, description, safety_info, teacher_id))
                 return cur.fetchone()['equipment_id']
+        except pg_errors.UniqueViolation:
+            log.warning("add_lab_equipment: equipment_name already exists (%s)", name)
+            return None
         except Exception:
             log.exception("add_lab_equipment failed (name=%s, type=%s)", name, equipment_type)
             return None
@@ -260,6 +288,9 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
     # ---------- REACTIONS ----------
     @staticmethod
     def add_reaction(teacher_id, element1_id, element2_id, product, conditions):
+        if element1_id == element2_id:
+            log.warning("add_reaction blocked: element1_id == element2_id")
+            return None
         try:
             with _conn_cur() as cur:
                 cur.execute('''
@@ -268,12 +299,21 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
                     RETURNING reaction_id
                 ''', (teacher_id, element1_id, element2_id, product, conditions))
                 return cur.fetchone()['reaction_id']
+        except pg_errors.UniqueViolation:
+            log.warning("add_reaction: duplicate (element1, element2, conditions)")
+            return None
+        except pg_errors.CheckViolation:
+            log.warning("add_reaction: check violation (element1_id <> element2_id)")
+            return None
         except Exception:
             log.exception("add_reaction failed")
             return None
 
     @staticmethod
     def update_reaction(reaction_id, element1_id, element2_id, product, conditions):
+        if element1_id == element2_id:
+            log.warning("update_reaction blocked: element1_id == element2_id")
+            return False
         try:
             with _conn_cur() as cur:
                 cur.execute('''
@@ -282,6 +322,12 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
                     WHERE reaction_id = %s
                 ''', (element1_id, element2_id, product, conditions, reaction_id))
                 return True
+        except pg_errors.UniqueViolation:
+            log.warning("update_reaction: duplicate (element1, element2, conditions)")
+            return False
+        except pg_errors.CheckViolation:
+            log.warning("update_reaction: check violation (element1_id <> element2_id)")
+            return False
         except Exception:
             log.exception("update_reaction failed (reaction_id=%s)", reaction_id)
             return False
@@ -292,9 +338,13 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
             with _conn_cur() as cur:
                 cur.execute('DELETE FROM reaction WHERE reaction_id = %s', (reaction_id,))
                 return True
+        except pg_errors.ForeignKeyViolation:
+            log.warning("delete_reaction blocked: Reaction %s has Experiments", reaction_id)
+            return False
         except Exception:
             log.exception("delete_reaction failed (reaction_id=%s)", reaction_id)
             return False
+
 
     @staticmethod
     def get_all_reactions():
@@ -347,11 +397,12 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
                     INSERT INTO experiment (teacher_id, reaction_id, result, safety_warning, time_stamp)
                     VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
                     RETURNING experiment_id
-                ''', (teacher_id, reaction_id, result, safety_warning))
+                ''', (teacher_id, reaction_id, result, _null_if_blank(safety_warning)))
                 return cur.fetchone()['experiment_id']
         except Exception:
             log.exception("insert_experiment failed")
             return None
+
 
     @staticmethod
     def get_all_experiments():
@@ -434,9 +485,13 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
                 cur.execute('''
                     INSERT INTO userparticipatesinexperiment (user_id, experiment_id)
                     VALUES (%s, %s)
+                    ON CONFLICT (user_id, experiment_id) DO NOTHING
                 ''', (user_id, experiment_id))
+                return True
         except Exception:
             log.exception("track_experiment_participation failed")
+            return False
+
 
     @staticmethod
     def get_user_experiments(user_id):
@@ -634,7 +689,7 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
                     JOIN elements el1 ON r.element1_id = el1.element_id
                     JOIN elements el2 ON r.element2_id = el2.element_id
                     WHERE up.user_id = %s
-                    ORDER BY e.time_stamp DESC
+                    ORDER BY up.participation_timestamp DESC
                 """, (student_id,))
                 return cur.fetchall()
         except Exception:
@@ -994,20 +1049,34 @@ class DatabaseManager(DatabaseManager):  # extend class with methods
                 return []
 
     @staticmethod
-    def get_reaction_by_symbols(sym1: str, sym2: str):
+    def get_reaction_by_element_ids(e1: int, e2: int):
         try:
             with _conn_cur() as cur:
                 cur.execute("""
                     SELECT r.reaction_id, r.product, r.conditions
                     FROM reaction r
-                    JOIN elements e1 ON r.element1_id = e1.element_id
-                    JOIN elements e2 ON r.element2_id = e2.element_id
-                    WHERE (UPPER(e1.symbol) = UPPER(%s) AND UPPER(e2.symbol) = UPPER(%s))
-                       OR (UPPER(e1.symbol) = UPPER(%s) AND UPPER(e2.symbol) = UPPER(%s))
+                    WHERE (r.element1_id = %s AND r.element2_id = %s)
+                    OR (r.element1_id = %s AND r.element2_id = %s)
                     LIMIT 1
-                """, (sym1, sym2, sym2, sym1))
+                """, (e1, e2, e2, e1))
                 row = cur.fetchone()
                 return dict(row) if row else None
         except Exception:
-            log.exception("get_reaction_by_symbols failed (%s, %s)", sym1, sym2)
+            log.exception("get_reaction_by_element_ids failed (%s, %s)", e1, e2)
             return None
+
+    @staticmethod
+    def get_experiments_by_reaction(reaction_id: int, limit: int = 50):
+        try:
+            with _conn_cur() as cur:
+                cur.execute("""
+                    SELECT e.experiment_id, e.result, e.time_stamp
+                    FROM experiment e
+                    WHERE e.reaction_id = %s
+                    ORDER BY e.time_stamp DESC
+                    LIMIT %s
+                """, (reaction_id, limit))
+                return cur.fetchall()
+        except Exception:
+            log.exception("get_experiments_by_reaction failed (%s)", reaction_id)
+            return []

@@ -20,6 +20,20 @@
         <li class="nav-item"><a class="nav-link" href="/equipment">Опрема</a></li>
         <li class="nav-item"><a class="nav-link" href="/laboratory">Лабораторија</a></li>
       </ul>
+      <!-- base.html (во body, веднаш под navbar) -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, msg in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ msg }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
       <div class="d-flex align-items-center gap-2">
         <span class="text-white-50 small d-none d-md-inline">{{ session.user_name }}</span>
         <a class="btn btn-outline-light btn-sm" href="/logout">Одјава</a>
